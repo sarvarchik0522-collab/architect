@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  avatar    String?
+  role      String   @default("architect")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects  Project[]
+  diaries   Diary[]
+  tasks     Task[]
+  incomes   Income[]
+  expenses  Expense[]
+  documents Document[]
+  clients   Client[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  company   String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects Project[]
+  payments Income[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  startDate   DateTime?
+  deadline    DateTime?
+  status      String    @default("NEW")
+  description String?
+  budget      Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId String?
+  client   Client?  @relation(fields: [clientId], references: [id])
+
+  files      ProjectFile[]
+  notes      ProjectNote[]
+  tasks      Task[]
+  incomes    Income[]
+  diaryLinks DiaryProject[]
+}
+
+model ProjectFile {
+  id           String   @id @default(cuid())
+  name         String
+  originalName String
+  path         String
+  size         Int
+  mimeType     String
+  createdAt    DateTime @default(now())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Diary {
+  id          String   @id @default(cuid())
+  date        DateTime
+  title       String
+  description String?
+  workDone    String?
+  problems    String?
+  decisions   String?
+  images      String?
+  mood        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects DiaryProject[]
+}
+
+model DiaryProject {
+  id        String  @id @default(cuid())
+  diaryId   String
+  projectId String
+  diary     Diary   @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([diaryId, projectId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  deadline    DateTime?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Float
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Float
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  name         String
+  originalName String
+  path         String
+  size         Int
+  mimeType     String
+  folder       String   @default("OTHER")
+  description  String?
+  createdAt    DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
