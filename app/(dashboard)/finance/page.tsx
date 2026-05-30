@@ -28,7 +28,7 @@ export default function FinancePage() {
   const [saving,   setSaving]   = useState(false)
   const { toast } = useToast()
 
-  const [incForm, setIncForm] = useState({ date: new Date().toISOString().split("T")[0], amount:"", description:"", category:"PROJECT_PAYMENT", projectId:"", clientId:"" })
+  const [incForm, setIncForm] = useState({ date: new Date().toISOString().split("T")[0], amount:"", description:"", category:"PROJECT_PAYMENT", projectId:"none", clientId:"none" })
   const [expForm, setExpForm] = useState({ date: new Date().toISOString().split("T")[0], amount:"", description:"", category:"OTHER" })
 
   const load = useCallback(async () => {
@@ -52,7 +52,7 @@ export default function FinancePage() {
     if (!incForm.amount) return toast({ variant:"destructive", title:"Summa kiritilishi shart" })
     setSaving(true)
     try {
-      await fetch("/api/finance/income", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ ...incForm, amount: +incForm.amount, projectId: incForm.projectId||null, clientId: incForm.clientId||null }) })
+      await fetch("/api/finance/income", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ ...incForm, amount: +incForm.amount, projectId: incForm.projectId === "none" ? null : incForm.projectId || null, clientId: incForm.clientId === "none" ? null : incForm.clientId || null }) })
       toast({ title:"Daromad qo'shildi" }); setIncOpen(false); load()
     } catch { toast({ variant:"destructive", title:"Xatolik" }) }
     finally { setSaving(false) }
@@ -196,13 +196,13 @@ export default function FinancePage() {
               <div className="space-y-1.5"><Label>Loyiha</Label>
                 <Select value={incForm.projectId} onValueChange={v => setIncForm(f => ({...f, projectId:v}))}>
                   <SelectTrigger><SelectValue placeholder="Tanlang" /></SelectTrigger>
-                  <SelectContent><SelectItem value="">— Yo'q —</SelectItem>{projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="none">— Yo'q —</SelectItem>{projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5"><Label>Mijoz</Label>
                 <Select value={incForm.clientId} onValueChange={v => setIncForm(f => ({...f, clientId:v}))}>
                   <SelectTrigger><SelectValue placeholder="Tanlang" /></SelectTrigger>
-                  <SelectContent><SelectItem value="">— Yo'q —</SelectItem>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="none">— Yo'q —</SelectItem>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

@@ -23,7 +23,7 @@ const COLS = [
   { key:"DONE",        label:"Bajarildi",    dotColor:"bg-green-500",  bg:"bg-green-50 dark:bg-green-900/20" },
 ]
 
-const EMPTY = { title:"", description:"", deadline:"", priority:"MEDIUM", status:"TODO", projectId:"" }
+const EMPTY = { title:"", description:"", deadline:"", priority:"MEDIUM", status:"TODO", projectId:"none" }
 
 export default function TasksPage() {
   const [tasks,    setTasks]    = useState<Task[]>([])
@@ -49,7 +49,7 @@ export default function TasksPage() {
   const openEdit   = (t: Task) => {
     setEditing(t)
     setForm({ title:t.title, description:t.description??"", deadline: t.deadline ? t.deadline.split("T")[0] : "",
-      priority:t.priority, status:t.status, projectId:t.project?.id??"" })
+      priority:t.priority, status:t.status, projectId:t.project?.id??"none" })
     setOpen(true)
   }
 
@@ -60,7 +60,7 @@ export default function TasksPage() {
       const res = await fetch(editing ? `/api/tasks/${editing.id}` : "/api/tasks", {
         method: editing ? "PUT" : "POST",
         headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({ ...form, projectId: form.projectId || null, deadline: form.deadline || null }),
+        body: JSON.stringify({ ...form, projectId: form.projectId === "none" ? null : form.projectId || null, deadline: form.deadline || null }),
       })
       if (!res.ok) throw new Error()
       toast({ title: editing ? "Yangilandi" : "Yaratildi" }); setOpen(false); load()
@@ -199,7 +199,7 @@ export default function TasksPage() {
               <Select value={form.projectId} onValueChange={v => setForm(f => ({...f, projectId:v}))}>
                 <SelectTrigger><SelectValue placeholder="Tanlang" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Yo'q —</SelectItem>
+                  <SelectItem value="none">— Yo'q —</SelectItem>
                   {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>

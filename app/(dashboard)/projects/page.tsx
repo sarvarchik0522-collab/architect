@@ -23,7 +23,7 @@ interface Project {
 }
 interface Client { id: string; name: string }
 
-const EMPTY = { name:"", clientId:"", phone:"", email:"", address:"", startDate:"", deadline:"", status:"NEW", description:"", budget:"" }
+const EMPTY = { name:"", clientId:"none", phone:"", email:"", address:"", startDate:"", deadline:"", status:"NEW", description:"", budget:"" }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -50,7 +50,7 @@ export default function ProjectsPage() {
   const openCreate = () => { setEditing(null); setForm(EMPTY); setOpen(true) }
   const openEdit   = (p: Project) => {
     setEditing(p)
-    setForm({ name: p.name, clientId: p.client?.id ?? "", phone: p.phone ?? "", email: "",
+    setForm({ name: p.name, clientId: p.client?.id ?? "none", phone: p.phone ?? "", email: "",
       address: p.address ?? "", startDate: p.startDate ? p.startDate.split("T")[0] : "",
       deadline: p.deadline ? p.deadline.split("T")[0] : "", status: p.status,
       description: p.description ?? "", budget: p.budget ? String(p.budget) : "" })
@@ -64,7 +64,7 @@ export default function ProjectsPage() {
       const res = await fetch(editing ? `/api/projects/${editing.id}` : "/api/projects", {
         method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, clientId: form.clientId || null, budget: form.budget ? Number(form.budget) : null, startDate: form.startDate || null, deadline: form.deadline || null }),
+        body: JSON.stringify({ ...form, clientId: form.clientId === "none" ? null : form.clientId || null, budget: form.budget ? Number(form.budget) : null, startDate: form.startDate || null, deadline: form.deadline || null }),
       })
       if (!res.ok) throw new Error()
       toast({ title: editing ? "Yangilandi" : "Yaratildi" })
@@ -203,7 +203,7 @@ export default function ProjectsPage() {
               <Select value={form.clientId} onValueChange={v => setForm(f => ({...f, clientId: v}))}>
                 <SelectTrigger><SelectValue placeholder="Tanlang" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Yo'q —</SelectItem>
+                  <SelectItem value="none">— Yo'q —</SelectItem>
                   {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
