@@ -13,6 +13,11 @@ import { cn, formatCurrency } from "@/lib/utils"
 
 interface WorkItem { name: string; unit: string; qty: number; price: number }
 
+/* Warm palette */
+const C = { ink:"var(--ink)", ink3:"var(--ink3)", cream:"var(--cream)", cream2:"var(--cream2)", stone:"var(--stone)", stone2:"var(--stone2)", white:"var(--white)", border:"rgba(200,168,112,.14)", gold:"var(--gold)" }
+const inputSt = { background:C.cream, border:`1px solid ${C.border}`, borderRadius:3, color:C.ink, outline:"none" } as React.CSSProperties
+const labelSt = { fontSize:9, color:C.stone2, fontWeight:700, letterSpacing:".14em", textTransform:"uppercase" as const }
+
 const EMPTY_FORM = {
   contractNumber: `SH-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
   title: "", status: "DRAFT",
@@ -90,45 +95,49 @@ export default function NewContractPage() {
     } finally { setSaving(false) }
   }
 
-  const inputCls = "rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-  const labelCls = "text-xs font-semibold text-[#666]"
+  const inputCls = "h-10 px-3 text-sm rounded-sm"
+  const labelCls = "text-[9px] font-bold uppercase tracking-wider"
 
   return (
-    <div className="max-w-4xl space-y-6 page-enter">
+    <div className="max-w-4xl space-y-6 anim-page">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <Link href="/contracts">
-          <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-[#888] hover:text-white">
+          <button className="btn-outline h-9 px-3 text-sm flex items-center gap-1.5">
             <ArrowLeft className="h-4 w-4" /> Orqaga
-          </Button>
+          </button>
         </Link>
-        <Button onClick={save} disabled={saving} className="btn-primary rounded-xl gap-2">
+        <button onClick={save} disabled={saving} className="btn-ink h-9 px-4 text-sm flex items-center gap-2">
           <Save className="h-4 w-4" />
           {saving ? "Saqlanmoqda..." : "Shartnomani Saqlash"}
-        </Button>
+        </button>
       </div>
 
-      <div className="arch-card p-6 space-y-6">
-        <div className="flex items-center gap-3 pb-4 border-b border-[#222]">
-          <span className="text-2xl">📜</span>
+      <div className="card-premium p-6 space-y-6">
+        <div className="flex items-center gap-3 pb-4" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+          <div style={{ width:16, height:1, background:"var(--gold)", opacity:.6 }}/>
+          <span className="text-xl">📜</span>
           <div>
-            <h2 className="text-xl font-bold text-white">Yangi Shartnoma</h2>
-            <p className="text-xs text-[#444]">Barcha maydonlarni to'ldiring</p>
+            <h2 className="text-xl font-black tracking-tight"
+              style={{ fontFamily:"'Playfair Display',serif", color:C.ink }}>Yangi Shartnoma</h2>
+            <p className="text-xs" style={{ color:C.stone2 }}>Barcha maydonlarni to'ldiring</p>
           </div>
         </div>
 
         {/* Contract info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label className={labelCls}>Shartnoma raqami *</Label>
-            <Input value={form.contractNumber} onChange={e => setForm(f => ({...f, contractNumber: e.target.value}))}
-              className={inputCls} />
+            <label className={labelCls} style={{ color:C.stone2 }}>Shartnoma raqami *</label>
+            <input value={form.contractNumber} onChange={e => setForm(f => ({...f, contractNumber: e.target.value}))}
+              className={`w-full ${inputCls}`} style={inputSt}
+              onFocus={e=>{e.target.style.borderColor=C.stone2}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
           </div>
           <div className="sm:col-span-2 space-y-1.5">
-            <Label className={labelCls}>Sarlavha *</Label>
-            <Input placeholder="Loyiha arxitektura xizmatlari shartnomasi" value={form.title}
+            <label className={labelCls} style={{ color:C.stone2 }}>Sarlavha *</label>
+            <input placeholder="Loyiha arxitektura xizmatlari shartnomasi" value={form.title}
               onChange={e => setForm(f => ({...f, title: e.target.value}))}
-              className={inputCls} />
+              className={`w-full ${inputCls}`} style={inputSt}
+              onFocus={e=>{e.target.style.borderColor=C.stone2}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
           </div>
         </div>
 
@@ -136,14 +145,19 @@ export default function NewContractPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Client */}
           <div className="space-y-4">
-            <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">👤 Buyurtmachi</p>
+            <div className="flex items-center gap-2 pb-2" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+              <span>👤</span>
+              <p style={{ ...labelSt, color:C.stone2 }}>Buyurtmachi</p>
+            </div>
             <div className="space-y-1.5">
-              <Label className={labelCls}>Bazadan tanlash</Label>
+              <label style={labelSt} className="block" style={{ color:C.stone2 }}>Bazadan tanlash</label>
               <Select value={form.clientId} onValueChange={fillFromClient}>
-                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Mijoz tanlang"/></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Qo'lda kiritish —</SelectItem>
-                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                <SelectTrigger className="h-10 rounded-sm text-sm" style={{ background:C.cream, border:`1px solid ${C.border}`, color:C.ink3 }}>
+                  <SelectValue placeholder="Mijoz tanlang"/>
+                </SelectTrigger>
+                <SelectContent style={{ background:C.white, border:`1px solid ${C.border}` }}>
+                  <SelectItem value="none" style={{ color:C.stone2 }}>— Qo'lda kiritish —</SelectItem>
+                  {clients.map(c => <SelectItem key={c.id} value={c.id} style={{ color:C.ink3 }}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -154,27 +168,32 @@ export default function NewContractPage() {
               { field:"clientAddress", label:"Manzil",          placeholder:"Toshkent, Chilonzor 14" },
             ].map(f => (
               <div key={f.field} className="space-y-1.5">
-                <Label className={labelCls}>{f.label}</Label>
-                <Input placeholder={f.placeholder} value={(form as any)[f.field]}
+                <label style={labelSt} className="block" style={{ color:C.stone2 }}>{f.label}</label>
+                <input placeholder={f.placeholder} value={(form as any)[f.field]}
                   onChange={e => setForm(prev => ({...prev, [f.field]: e.target.value}))}
-                  className={inputCls} />
+                  className="w-full h-10 px-3 text-sm" style={inputSt}
+                  onFocus={e=>{e.target.style.borderColor=C.stone2}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
               </div>
             ))}
           </div>
 
           {/* Architect */}
           <div className="space-y-4">
-            <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">🏛️ Arxitektor (Ijrochi)</p>
+            <div className="flex items-center gap-2 pb-2" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+              <span>🏛️</span>
+              <p style={{ ...labelSt, color:C.stone2 }}>Arxitektor (Ijrochi)</p>
+            </div>
             {[
-              { field:"architectName",    label:"Ism-familiya *",  placeholder:"Karimov Alisher" },
+              { field:"architectName",    label:"Ism-familiya *",  placeholder:"Sarvarbek Mamatov" },
               { field:"architectPhone",   label:"Telefon",         placeholder:"+998 90 000 00 00" },
               { field:"architectAddress", label:"Manzil/Studiya",  placeholder:"Toshkent, Yunusobod 19" },
             ].map(f => (
               <div key={f.field} className="space-y-1.5">
-                <Label className={labelCls}>{f.label}</Label>
-                <Input placeholder={f.placeholder} value={(form as any)[f.field]}
+                <label style={labelSt} className="block" style={{ color:C.stone2 }}>{f.label}</label>
+                <input placeholder={f.placeholder} value={(form as any)[f.field]}
                   onChange={e => setForm(prev => ({...prev, [f.field]: e.target.value}))}
-                  className={inputCls} />
+                  className="w-full h-10 px-3 text-sm" style={inputSt}
+                  onFocus={e=>{e.target.style.borderColor=C.stone2}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
               </div>
             ))}
           </div>
@@ -182,94 +201,105 @@ export default function NewContractPage() {
 
         {/* Project info */}
         <div className="space-y-4">
-          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📐 Loyiha ma'lumotlari</p>
+          <div className="flex items-center gap-2 pb-2" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+            <span>📐</span>
+            <p style={{ ...labelSt, color:C.stone2 }}>Loyiha ma'lumotlari</p>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className={labelCls}>Loyihadan tanlash</Label>
+              <label style={labelSt} className="block" style={{ color:C.stone2 }}>Loyihadan tanlash</label>
               <Select value={form.projectId} onValueChange={fillFromProject}>
-                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Loyiha tanlang"/></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Qo'lda kiritish —</SelectItem>
-                  {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                <SelectTrigger className="h-10 rounded-sm text-sm" style={{ background:C.cream, border:`1px solid ${C.border}`, color:C.ink3 }}>
+                  <SelectValue placeholder="Loyiha tanlang"/>
+                </SelectTrigger>
+                <SelectContent style={{ background:C.white, border:`1px solid ${C.border}` }}>
+                  <SelectItem value="none" style={{ color:C.stone2 }}>— Qo'lda kiritish —</SelectItem>
+                  {projects.map(p => <SelectItem key={p.id} value={p.id} style={{ color:C.ink3 }}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Loyiha turi</Label>
-              <Input placeholder="Turar-joy, Savdo markazi..." value={form.projectType}
-                onChange={e => setForm(f => ({...f, projectType: e.target.value}))}
-                className={inputCls} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Loyiha nomi *</Label>
-              <Input placeholder="Loyiha nomi" value={form.projectName}
-                onChange={e => setForm(f => ({...f, projectName: e.target.value}))}
-                className={inputCls} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Manzil</Label>
-              <Input placeholder="Qurilish manzili" value={form.projectAddress}
-                onChange={e => setForm(f => ({...f, projectAddress: e.target.value}))}
-                className={inputCls} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Boshlanish sanasi</Label>
-              <Input type="date" value={form.startDate} onChange={e => setForm(f => ({...f, startDate: e.target.value}))}
-                className={inputCls} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelCls}>Tugash sanasi</Label>
-              <Input type="date" value={form.endDate} onChange={e => setForm(f => ({...f, endDate: e.target.value}))}
-                className={inputCls} />
-            </div>
+            {[
+              { f:"projectType",    l:"Loyiha turi",    ph:"Turar-joy, Savdo markazi..." },
+              { f:"projectName",    l:"Loyiha nomi *",  ph:"Loyiha nomi" },
+              { f:"projectAddress", l:"Manzil",         ph:"Qurilish manzili" },
+            ].map(x=>(
+              <div key={x.f} className="space-y-1.5">
+                <label style={labelSt} className="block" style={{ color:C.stone2 }}>{x.l}</label>
+                <input placeholder={x.ph} value={(form as any)[x.f]}
+                  onChange={e=>setForm(f=>({...f,[x.f]:e.target.value}))}
+                  className="w-full h-10 px-3 text-sm" style={inputSt}
+                  onFocus={e=>{e.target.style.borderColor=C.stone2}} onBlur={e=>{e.target.style.borderColor=C.border}}/>
+              </div>
+            ))}
+            {[{f:"startDate",l:"Boshlanish"},{f:"endDate",l:"Tugash"}].map(x=>(
+              <div key={x.f} className="space-y-1.5">
+                <label style={labelSt} className="block" style={{ color:C.stone2 }}>{x.l}</label>
+                <input type="date" value={(form as any)[x.f]}
+                  onChange={e=>setForm(f=>({...f,[x.f]:e.target.value}))}
+                  className="w-full h-10 px-3 text-sm" style={inputSt}/>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Work items */}
         <div className="space-y-4">
-          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📋 Ish turlari va narxlar</p>
-          <div className="overflow-x-auto">
+          <div className="flex items-center gap-2 pb-2" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+            <span>📋</span>
+            <p style={{ ...labelSt, color:C.stone2 }}>Ish turlari va narxlar</p>
+          </div>
+          <div className="overflow-x-auto rounded-sm" style={{ border:`1px solid ${C.border}` }}>
             <table className="table-arch w-full text-sm">
               <thead>
                 <tr>
                   {["#","Ish turi","Birlik","Miqdor","Narx (so'm)","Jami",""].map(h => (
-                    <th key={h} className="text-left pb-2 px-2 text-xs font-bold text-[#444] whitespace-nowrap">{h}</th>
+                    <th key={h} className="text-left pb-2 px-3 text-xs font-bold whitespace-nowrap"
+                      style={{ background:C.cream2, color:C.stone2, padding:"10px 12px", letterSpacing:".1em", textTransform:"uppercase" }}>
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1a1a1a]">
+              <tbody>
                 {items.map((item, i) => (
-                  <tr key={i} className="group">
-                    <td className="py-2 px-2 text-[#444] font-bold">{i+1}</td>
+                  <tr key={i} className="group" style={{ borderBottom:`1px solid rgba(200,168,112,.06)` }}>
+                    <td className="py-2 px-3 font-bold" style={{ color:C.stone, fontSize:11 }}>{i+1}</td>
                     <td className="py-2 px-2 min-w-[200px]">
-                      <Input value={item.name} placeholder="Loyiha eskizi, 3D vizualizatsiya..."
+                      <input value={item.name} placeholder="Loyiha eskizi, 3D vizualizatsiya..."
                         onChange={e => updateItem(i,"name",e.target.value)}
-                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm" />
+                        className="w-full h-9 px-3 text-sm" style={inputSt}/>
                     </td>
                     <td className="py-2 px-2 w-24">
                       <Select value={item.unit} onValueChange={v => updateItem(i,"unit",v)}>
-                        <SelectTrigger className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm w-20"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {["dona","m²","m","soat","varaq","to'plam"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                        <SelectTrigger className="h-9 text-sm w-20 rounded-sm" style={{ background:C.cream, border:`1px solid ${C.border}`, color:C.ink3 }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent style={{ background:C.white, border:`1px solid ${C.border}` }}>
+                          {["dona","m²","m","soat","varaq","to'plam"].map(u => <SelectItem key={u} value={u} style={{ color:C.ink3 }}>{u}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </td>
                     <td className="py-2 px-2 w-24">
-                      <Input type="number" value={item.qty} min={1}
+                      <input type="number" value={item.qty} min={1}
                         onChange={e => updateItem(i,"qty",+e.target.value)}
-                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm w-20" />
+                        className="w-20 h-9 px-3 text-sm" style={inputSt}/>
                     </td>
                     <td className="py-2 px-2 w-36">
-                      <Input type="number" value={item.price} min={0} placeholder="0"
+                      <input type="number" value={item.price} min={0} placeholder="0"
                         onChange={e => updateItem(i,"price",+e.target.value)}
-                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm" />
+                        className="w-full h-9 px-3 text-sm" style={inputSt}/>
                     </td>
-                    <td className="py-2 px-2 font-bold text-white whitespace-nowrap">
+                    <td className="py-2 px-2 font-bold whitespace-nowrap"
+                      style={{ color:C.ink, fontFamily:"'Playfair Display',serif" }}>
                       {formatCurrency(item.qty * item.price)}
                     </td>
                     <td className="py-2 px-1">
                       {items.length > 1 && (
-                        <button onClick={() => removeItem(i)} className="text-[#444] hover:text-[#888] opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => removeItem(i)}
+                          className="h-7 w-7 rounded flex items-center justify-center transition-colors"
+                          style={{ color:C.stone, opacity:0 }}
+                          onMouseEnter={e=>{(e.currentTarget as HTMLElement).style.background=C.cream2;(e.currentTarget as HTMLElement).style.opacity="1"}}
+                          onMouseLeave={e=>{(e.currentTarget as HTMLElement).style.background="transparent"}}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
@@ -280,19 +310,23 @@ export default function NewContractPage() {
             </table>
           </div>
           <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={addItem} size="sm" className="gap-1.5 rounded-xl border-[#333] text-[#888] hover:text-white hover:bg-[#1a1a1a]">
-              <Plus className="h-4 w-4" /> Ish turi qo'shish
-            </Button>
+            <button onClick={addItem}
+              className="btn-outline h-8 px-3 text-xs flex items-center gap-1.5">
+              <Plus className="h-3.5 w-3.5" /> Ish turi qo'shish
+            </button>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-xs text-[#444]">Avans to'lov</p>
-                <Input type="number" value={form.advanceAmount} min={0} placeholder="0"
+                <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color:C.stone2 }}>Avans to'lov</p>
+                <input type="number" value={form.advanceAmount} min={0} placeholder="0"
                   onChange={e => setForm(f => ({...f, advanceAmount: +e.target.value}))}
-                  className="h-9 w-40 rounded-xl bg-[#0d0d0d] border-[#333] text-white text-sm text-right mt-1" />
+                  className="h-9 w-40 text-sm text-right mt-1 px-3" style={inputSt}/>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#444]">Jami summa</p>
-                <p className="text-xl font-bold text-white mt-1">{formatCurrency(totalAmount)}</p>
+                <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color:C.stone2 }}>Jami summa</p>
+                <p className="text-xl font-black mt-1"
+                  style={{ color:C.ink, fontFamily:"'Playfair Display',serif" }}>
+                  {formatCurrency(totalAmount)}
+                </p>
               </div>
             </div>
           </div>
@@ -300,31 +334,37 @@ export default function NewContractPage() {
 
         {/* Terms */}
         <div className="space-y-3">
-          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📄 Shartnoma shartlari</p>
-          <Textarea value={form.terms} rows={6} placeholder="Shartnoma shartlari..."
+          <div className="flex items-center gap-2 pb-2" style={{ borderBottom:`1px solid rgba(200,168,112,.12)` }}>
+            <span>📄</span>
+            <p style={{ ...labelSt, color:C.stone2 }}>Shartnoma shartlari</p>
+          </div>
+          <textarea value={form.terms} rows={6} placeholder="Shartnoma shartlari..."
             onChange={e => setForm(f => ({...f, terms: e.target.value}))}
-            className="rounded-xl bg-[#0d0d0d] border-[#333] text-white resize-none text-sm" />
+            className="w-full px-3 py-2 text-sm resize-none" style={inputSt}/>
         </div>
 
         {/* Status */}
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
-            <Label className={labelCls}>Holat</Label>
+            <label style={labelSt} className="block" style={{ color:C.stone2 }}>Holat</label>
             <Select value={form.status} onValueChange={v => setForm(f => ({...f, status: v}))}>
-              <SelectTrigger className="w-40 h-11 rounded-xl bg-[#0d0d0d] border-[#333] text-white"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DRAFT">Qoralama</SelectItem>
-                <SelectItem value="PENDING">Kutilmoqda</SelectItem>
-                <SelectItem value="ACTIVE">Faol</SelectItem>
-                <SelectItem value="COMPLETED">Tugallandi</SelectItem>
-                <SelectItem value="CANCELLED">Bekor</SelectItem>
+              <SelectTrigger className="h-10 w-40 rounded-sm text-sm" style={{ background:C.cream, border:`1px solid ${C.border}`, color:C.ink3 }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent style={{ background:C.white, border:`1px solid ${C.border}` }}>
+                <SelectItem value="DRAFT" style={{ color:C.ink3 }}>Qoralama</SelectItem>
+                <SelectItem value="PENDING" style={{ color:C.ink3 }}>Kutilmoqda</SelectItem>
+                <SelectItem value="ACTIVE" style={{ color:C.ink3 }}>Faol</SelectItem>
+                <SelectItem value="COMPLETED" style={{ color:C.ink3 }}>Tugallandi</SelectItem>
+                <SelectItem value="CANCELLED" style={{ color:C.ink3 }}>Bekor</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={save} disabled={saving} className="btn-primary rounded-xl gap-2 h-11 px-6">
+          <button onClick={save} disabled={saving}
+            className="btn-ink h-10 px-5 text-sm flex items-center gap-2">
             <Save className="h-4 w-4" />
             {saving ? "Saqlanmoqda..." : "Shartnomani Saqlash"}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
