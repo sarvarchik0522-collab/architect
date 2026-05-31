@@ -1,26 +1,19 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Plus, Search, Users, Phone, Mail, Building, MoreVertical, Edit, Trash2, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Plus, Search, Phone, Mail, Building, MoreVertical, Edit, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { cn, PROJECT_STATUSES } from "@/lib/utils"
 
 interface Client {
   id:string; name:string; phone:string|null; email:string|null
   company:string|null; address:string|null; notes:string|null
-  projects: { id:string; name:string; status:string }[]
-  _count: { projects:number; payments:number }
+  projects:{ id:string; name:string; status:string }[]
+  _count:{ projects:number }
 }
-
 const EMPTY = { name:"", phone:"", email:"", company:"", address:"", notes:"" }
-
-const initials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2)
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
@@ -34,203 +27,131 @@ export default function ClientsPage() {
 
   const load = async () => {
     setLoading(true)
-    setClients(await fetch("/api/clients").then(r => r.json()))
+    setClients(await fetch("/api/clients").then(r=>r.json()))
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(()=>{ load() },[])
 
   const openCreate = () => { setEditing(null); setForm(EMPTY); setOpen(true) }
-  const openEdit = (c: Client) => {
+  const openEdit   = (c:Client) => {
     setEditing(c)
-    setForm({ name:c.name, phone:c.phone??"", email:c.email??"", company:c.company??"", address:c.address??"", notes:c.notes??"" })
+    setForm({name:c.name,phone:c.phone??"",email:c.email??"",company:c.company??"",address:c.address??"",notes:c.notes??""})
     setOpen(true)
   }
-
   const save = async () => {
-    if (!form.name.trim()) return toast({ variant:"destructive", title:"Ism kiritilishi shart" })
+    if (!form.name.trim()) return toast({variant:"destructive",title:"Ism kerak"})
     setSaving(true)
     try {
-      const res = await fetch(editing ? `/api/clients/${editing.id}` : "/api/clients", {
-        method: editing ? "PUT" : "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(form),
+      await fetch(editing?`/api/clients/${editing.id}`:"/api/clients",{
+        method:editing?"PUT":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)
       })
-      if (!res.ok) throw new Error()
-      toast({ title: editing ? "Yangilandi ✓" : "Yaratildi ✓" }); setOpen(false); load()
-    } catch { toast({ variant:"destructive", title:"Xatolik" }) }
+      toast({title:editing?"Yangilandi":"Yaratildi"}); setOpen(false); load()
+    } catch { toast({variant:"destructive",title:"Xatolik"}) }
     finally { setSaving(false) }
   }
-
-  const del = async (id: string) => {
-    if (!confirm("Mijozni o'chirishni tasdiqlaysizmi?")) return
-    await fetch(`/api/clients/${id}`, { method:"DELETE" })
-    toast({ title:"O'chirildi" }); load()
+  const del = async (id:string) => {
+    if (!confirm("O'chirishni tasdiqlaysizmi?")) return
+    await fetch(`/api/clients/${id}`,{method:"DELETE"})
+    toast({title:"O'chirildi"}); load()
   }
 
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.company?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
+  const filtered = clients.filter(c=>
+    c.name.toLowerCase().includes(search.toLowerCase())||
+    c.company?.toLowerCase().includes(search.toLowerCase())||
+    c.phone?.includes(search)
   )
 
+  const initials = (n:string) => n.split(" ").map(x=>x[0]).join("").toUpperCase().slice(0,2)
+
   return (
-    <div className="space-y-8 page-enter">
-
-      {/* ── Header banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0d0d0d] border border-[#222] p-8 text-white">
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">
-          <svg width="180" height="180" viewBox="0 0 180 180" className="animate-float">
-            <circle cx="90" cy="90" r="70" fill="none" stroke="white" strokeWidth="1"/>
-            <circle cx="90" cy="90" r="50" fill="none" stroke="white" strokeWidth="0.7"/>
-            <circle cx="90" cy="90" r="30" fill="none" stroke="white" strokeWidth="0.5"/>
-            {[0,60,120,180,240,300].map((deg, i) => (
-              <circle key={i} cx={90 + 50*Math.cos(deg*Math.PI/180)} cy={90 + 50*Math.sin(deg*Math.PI/180)} r="6" fill="white" opacity="0.4"/>
-            ))}
-          </svg>
+    <div className="space-y-5" style={{color:"#f0f0f0"}}>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black tracking-tight">Mijozlar</h2>
+          <p style={{fontSize:12,color:"#555"}}>{clients.length} ta mijoz</p>
         </div>
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="h-10 w-10 rounded-xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
-                <Users className="h-5 w-5 text-[#aaa]" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-white">Mijozlar</h2>
-                <p className="text-[#666] text-sm">{clients.length} ta mijoz · CRM tizimi</p>
-              </div>
-            </div>
-          </div>
-          <Button onClick={openCreate} className="btn-primary gap-2 rounded-xl h-10 px-5">
-            <Plus className="h-4 w-4" /> Yangi Mijoz
-          </Button>
-        </div>
-        {/* Stats row */}
-        <div className="flex flex-wrap gap-4 mt-5 relative z-10">
-          {[
-            { label: "Jami mijozlar",  value: clients.length,                         icon: "👥" },
-            { label: "Kompaniyalar",   value: clients.filter(c=>c.company).length,     icon: "🏢" },
-            { label: "Faol loyihalar", value: clients.reduce((s,c)=>s+c._count.projects,0), icon: "📐" },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-2 bg-[#1a1a1a] rounded-xl px-4 py-2.5 border border-[#333]">
-              <span className="text-xl">{s.icon}</span>
-              <div>
-                <p className="text-xl font-bold leading-none text-white">{s.value}</p>
-                <p className="text-xs text-[#555]">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <button onClick={openCreate} className="btn-primary h-9 px-4 text-sm flex items-center gap-2">
+          <Plus className="h-4 w-4"/> Yangi Mijoz
+        </button>
       </div>
 
-      {/* ── Search ── */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
-        <Input placeholder="Mijoz, kompaniya, telefon qidirish..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          className="pl-10 h-11 rounded-xl border-[#222] bg-[#111] text-white" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{color:"#444"}}/>
+        <input placeholder="Qidirish..." value={search} onChange={e=>setSearch(e.target.value)}
+          className="w-full h-9 pl-9 pr-3 text-sm rounded"
+          style={{background:"#111",border:"1px solid #222",color:"#f0f0f0",outline:"none"}}
+          onFocus={e=>{e.target.style.borderColor="#444"}} onBlur={e=>{e.target.style.borderColor="#222"}}/>
       </div>
 
-      {/* ── Grid ── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton h-48 rounded-2xl" style={{ animationDelay:`${i*0.08}s` }} />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1,2,3].map(i=><div key={i} className="skeleton h-40"/>)}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-[#555]">
-          <div className="h-20 w-20 rounded-3xl bg-[#111] border border-[#222] flex items-center justify-center mb-4">
-            <Users className="h-10 w-10 opacity-30" />
-          </div>
-          <p className="text-lg font-semibold text-[#666]">Mijoz topilmadi</p>
-          <Button onClick={openCreate} className="mt-5 btn-primary rounded-xl gap-2">
-            <Plus className="h-4 w-4" /> Yaratish
-          </Button>
+      ) : filtered.length===0 ? (
+        <div className="flex flex-col items-center py-20" style={{color:"#444"}}>
+          <p className="font-semibold" style={{color:"#666"}}>Mijoz topilmadi</p>
+          <button onClick={openCreate} className="btn-ghost mt-4 h-9 px-4 text-sm">Yaratish</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((c, i) => (
-            <div key={c.id} className="arch-card arch-card-lift group animate-card"
-              style={{ animationDelay:`${i*0.07}s` }}>
-              <div className="h-1 w-full bg-[#333]" />
-              <div className="p-5">
-                <div className="flex items-start gap-4 mb-4">
-                  {/* Monochrome Avatar */}
-                  <div className="relative flex-shrink-0">
-                    <div className="h-14 w-14 rounded-2xl bg-[#222] border border-[#333] flex items-center justify-center text-white font-bold text-lg">
-                      {initials(c.name)}
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((c,i)=>(
+            <div key={c.id} className="arch-card arch-card-lift animate-card" style={{animationDelay:`${i*0.06}s`}}>
+              <div style={{height:1,background:"#1a1a1a"}}/>
+              <div className="p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  {/* Avatar */}
+                  <div className="h-10 w-10 rounded flex items-center justify-center text-sm font-bold flex-shrink-0"
+                    style={{background:"#1a1a1a",border:"1px solid #2a2a2a",color:"#888"}}>
+                    {initials(c.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <Link href={`/clients/${c.id}`}>
-                        <h3 className="font-bold text-white hover:text-[#ccc] transition-colors leading-tight">{c.name}</h3>
+                        <h3 className="font-bold text-sm" style={{color:"#f0f0f0"}}>{c.name}</h3>
                       </Link>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                            <MoreVertical className="h-3.5 w-3.5" />
-                          </Button>
+                          <button className="h-6 w-6 rounded flex items-center justify-center hover:bg-[#1a1a1a]"
+                            style={{color:"#444",flexShrink:0}}>
+                            <MoreVertical className="h-3.5 w-3.5"/>
+                          </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem onClick={() => openEdit(c)} className="rounded-lg">
-                            <Edit className="h-4 w-4 mr-2 text-[#888]" /> Tahrirlash
+                        <DropdownMenuContent align="end"
+                          style={{background:"#111",border:"1px solid #222",color:"#f0f0f0"}}>
+                          <DropdownMenuItem onClick={()=>openEdit(c)} style={{color:"#ccc",cursor:"pointer"}}>
+                            <Edit className="h-3.5 w-3.5 mr-2"/> Tahrirlash
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => del(c.id)} className="rounded-lg text-[#ccc]">
-                            <Trash2 className="h-4 w-4 mr-2" /> O'chirish
+                          <DropdownMenuItem onClick={()=>del(c.id)} style={{color:"#888",cursor:"pointer"}}>
+                            <Trash2 className="h-3.5 w-3.5 mr-2"/> O'chirish
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    {c.company && (
-                      <p className="text-sm text-[#555] flex items-center gap-1.5 mt-0.5">
-                        <Building className="h-3.5 w-3.5 text-[#444]" /> {c.company}
-                      </p>
-                    )}
+                    {c.company&&<p className="text-xs flex items-center gap-1 mt-0.5" style={{color:"#555"}}>
+                      <Building className="h-3 w-3"/> {c.company}
+                    </p>}
                   </div>
                 </div>
-
-                {/* Contact info */}
-                <div className="space-y-2">
-                  {c.phone && (
-                    <a href={`tel:${c.phone}`} className="flex items-center gap-2.5 text-sm text-[#555] hover:text-[#aaa] transition-colors group/link">
-                      <div className="h-7 w-7 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
-                        <Phone className="h-3.5 w-3.5 text-[#666]" />
-                      </div>
-                      <span className="font-medium">{c.phone}</span>
-                    </a>
-                  )}
-                  {c.email && (
-                    <a href={`mailto:${c.email}`} className="flex items-center gap-2.5 text-sm text-[#555] hover:text-[#aaa] transition-colors group/link truncate">
-                      <div className="h-7 w-7 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
-                        <Mail className="h-3.5 w-3.5 text-[#666]" />
-                      </div>
-                      <span className="truncate">{c.email}</span>
-                    </a>
-                  )}
+                <div className="space-y-1.5">
+                  {c.phone&&<a href={`tel:${c.phone}`} className="text-xs flex items-center gap-1.5 hover:opacity-80" style={{color:"#555"}}>
+                    <Phone className="h-3.5 w-3.5"/> {c.phone}
+                  </a>}
+                  {c.email&&<a href={`mailto:${c.email}`} className="text-xs flex items-center gap-1.5 truncate hover:opacity-80" style={{color:"#555"}}>
+                    <Mail className="h-3.5 w-3.5"/> {c.email}
+                  </a>}
                 </div>
-
-                {/* Projects */}
-                {c.projects.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-[#222]">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-[#444] uppercase tracking-wider">{c._count.projects} ta loyiha</p>
-                      <Link href={`/clients/${c.id}`}>
-                        <span className="text-xs text-[#666] flex items-center gap-0.5 hover:text-[#aaa]">
-                          Barchasi <ChevronRight className="h-3 w-3" />
-                        </span>
-                      </Link>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {c.projects.slice(0,3).map(p => (
+                {c.projects.length>0&&(
+                  <div className="mt-3 pt-3" style={{borderTop:"1px solid #1a1a1a"}}>
+                    <p className="text-xs mb-1.5" style={{color:"#444"}}>{c._count.projects} ta loyiha</p>
+                    <div className="flex flex-wrap gap-1">
+                      {c.projects.slice(0,3).map(p=>(
                         <Link key={p.id} href={`/projects/${p.id}`}>
-                          <span className="text-xs px-2 py-0.5 rounded-lg font-medium cursor-pointer bg-[#1a1a1a] text-[#888] border border-[#333] hover:bg-[#222] transition-colors">
-                            {p.name.length > 16 ? p.name.slice(0,16)+"…" : p.name}
+                          <span className="text-xs px-2 py-0.5 rounded"
+                            style={{background:"#1a1a1a",border:"1px solid #222",color:"#666"}}>
+                            {p.name.length>16?p.name.slice(0,16)+"…":p.name}
                           </span>
                         </Link>
                       ))}
-                      {c.projects.length > 3 && (
-                        <span className="text-xs text-[#444] px-1">+{c.projects.length-3}</span>
-                      )}
                     </div>
                   </div>
                 )}
@@ -240,38 +161,43 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* ── Dialog ── */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg rounded-2xl bg-[#111] border border-[#222]">
+        <DialogContent className="max-w-md rounded"
+          style={{background:"#0f0f0f",border:"1px solid #222",color:"#f0f0f0"}}>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-white">{editing ? "Mijozni tahrirlash" : "Yangi Mijoz"}</DialogTitle>
-            <DialogDescription className="text-[#666]">Mijoz ma'lumotlarini kiriting</DialogDescription>
+            <DialogTitle style={{color:"#f0f0f0"}}>{editing?"Mijoz tahrirlash":"Yangi Mijoz"}</DialogTitle>
+            <DialogDescription style={{color:"#555"}}>Ma'lumotlarni kiriting</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Ism-familiya *</Label>
-              <Input placeholder="Bobur Toshmatov" value={form.name} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, name: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label className="text-[#888]">Telefon</Label>
-              <Input placeholder="+998 90 123 45 67" value={form.phone} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, phone: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label className="text-[#888]">Email</Label>
-              <Input type="email" placeholder="client@example.com" value={form.email} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, email: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Kompaniya</Label>
-              <Input placeholder="ABC Qurilish LLC" value={form.company} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, company: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Manzil</Label>
-              <Input placeholder="Toshkent, Chilonzor 14" value={form.address} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, address: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Izoh</Label>
-              <Textarea rows={2} placeholder="Qo'shimcha ma'lumot..." value={form.notes} className="rounded-xl resize-none bg-[#0d0d0d] border-[#333] text-white"
-                onChange={e => setForm(f => ({...f, notes: e.target.value}))} /></div>
+          <div className="grid grid-cols-2 gap-4 py-2">
+            {[
+              {field:"name",    label:"Ism *",    ph:"Bobur Toshmatov",     span:2},
+              {field:"phone",   label:"Telefon",  ph:"+998 90 000 00 00",   span:1},
+              {field:"email",   label:"Email",    ph:"email@example.com",   span:1},
+              {field:"company", label:"Kompaniya",ph:"ABC Qurilish LLC",     span:2},
+              {field:"address", label:"Manzil",   ph:"Toshkent, ...",        span:2},
+            ].map(f=>(
+              <div key={f.field} className={`space-y-1.5${f.span===2?" col-span-2":""}`}>
+                <label className="text-xs font-semibold uppercase tracking-wider" style={{color:"#555"}}>{f.label}</label>
+                <input placeholder={f.ph} value={(form as any)[f.field]}
+                  onChange={e=>setForm(prev=>({...prev,[f.field]:e.target.value}))}
+                  className="w-full h-10 px-3 text-sm rounded"
+                  style={{background:"#0d0d0d",border:"1px solid #222",color:"#f0f0f0",outline:"none"}}
+                  onFocus={e=>{e.target.style.borderColor="#555"}}
+                  onBlur={e=>{e.target.style.borderColor="#222"}}/>
+              </div>
+            ))}
+            <div className="col-span-2 space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider" style={{color:"#555"}}>Izoh</label>
+              <textarea rows={2} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}
+                className="w-full px-3 py-2 text-sm rounded resize-none"
+                style={{background:"#0d0d0d",border:"1px solid #222",color:"#f0f0f0",outline:"none"}}/>
+            </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl border-[#333] text-[#888]">Bekor</Button>
-            <Button onClick={save} disabled={saving} className="btn-primary rounded-xl">
-              {saving ? "Saqlanmoqda..." : editing ? "Saqlash" : "Yaratish"}
-            </Button>
+            <button onClick={()=>setOpen(false)} className="btn-ghost h-9 px-4 text-sm">Bekor</button>
+            <button onClick={save} disabled={saving} className="btn-primary h-9 px-4 text-sm">
+              {saving?"...":editing?"Saqlash":"Yaratish"}
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
