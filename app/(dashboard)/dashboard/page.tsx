@@ -4,150 +4,267 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { ArrowRight, ChevronRight } from "lucide-react"
 import { cn, formatDate, formatCurrency, PROJECT_STATUSES } from "@/lib/utils"
+import { Scene3D } from "@/components/scene3d"
 
-// Arch SVG for hero bg
-function HeroArch() {
+/* ── Uzbek arch divider ── */
+function ArchDivider() {
   return (
-    <svg className="absolute right-0 top-0 h-full w-auto opacity-[0.08] pointer-events-none" viewBox="0 0 400 300" fill="none">
-      <path d="M80 300 L80 130 Q80 40 200 40 Q320 40 320 130 L320 300" stroke="#DAA520" strokeWidth="2"/>
-      <path d="M120 300 L120 140 Q120 70 200 70 Q280 70 280 140 L280 300" stroke="#DAA520" strokeWidth="1.2"/>
-      <polygon points="200,32 216,42 200,52 184,42" fill="#DAA520" opacity="0.6"/>
-      <polygon points="200,90 212,96 216,110 212,124 200,130 188,124 184,110 188,96" fill="none" stroke="#DAA520" strokeWidth="1.2"/>
-      <circle cx="200" cy="110" r="10" fill="none" stroke="#DAA520" strokeWidth="0.8"/>
-      <line x1="80" y1="300" x2="80" y2="200" stroke="#DAA520" strokeWidth="3" opacity="0.4"/>
-      <line x1="320" y1="300" x2="320" y2="200" stroke="#DAA520" strokeWidth="3" opacity="0.4"/>
-      <line x1="80" y1="185" x2="320" y2="185" stroke="#DAA520" strokeWidth="0.8" strokeDasharray="5 3" opacity="0.3"/>
-      {[0,1,2,3,4].map(i=>(
-        <line key={i} x1={100+i*45} y1="200" x2={100+i*45} y2="300" stroke="#DAA520" strokeWidth="0.4" opacity="0.2"/>
-      ))}
+    <svg viewBox="0 0 400 24" className="w-full" fill="none">
+      <path d="M0 12 L140 12 Q150 2 160 2 Q170 2 180 12 Q190 22 200 22 Q210 22 220 12 Q230 2 240 2 Q250 2 260 12 L400 12"
+        stroke="url(#dg)" strokeWidth="1" opacity="0.4"/>
+      <defs>
+        <linearGradient id="dg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="transparent"/>
+          <stop offset="30%" stopColor="#C9933A"/>
+          <stop offset="50%" stopColor="#2E8B82"/>
+          <stop offset="70%" stopColor="#C9933A"/>
+          <stop offset="100%" stopColor="transparent"/>
+        </linearGradient>
+      </defs>
     </svg>
   )
 }
 
-// Small 8-sided ornament
-function Hex8({ size=40, opacity=0.5 }: { size?:number; opacity?:number }) {
+/* ── Small 8-pointed star ── */
+function Star8({ size = 16, color = "#C9933A", opacity = 0.6 }: { size?: number; color?: string; opacity?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" style={{opacity}}>
-      <polygon points="20,2 38,11 38,29 20,38 2,29 2,11" stroke="#DAA520" strokeWidth="1.2"/>
-      <polygon points="20,8 32,14 32,26 20,32 8,26 8,14" stroke="#DAA520" strokeWidth="0.7"/>
-      <circle cx="20" cy="20" r="6" stroke="#DAA520" strokeWidth="0.7"/>
-      <circle cx="20" cy="20" r="2" fill="#DAA520"/>
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" style={{ opacity }}>
+      <polygon points="8,1 10,6 15,6 11,9.5 12.5,15 8,12 3.5,15 5,9.5 1,6 6,6"
+        fill={color} />
     </svg>
+  )
+}
+
+/* ── Floating SVG hex ornament (client-free, server safe) ── */
+function FloatHex({ style }: { style?: React.CSSProperties }) {
+  return (
+    <div className="absolute pointer-events-none" style={style}>
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <polygon points="24,2 46,13 46,35 24,46 2,35 2,13"
+          stroke="#C9933A" strokeWidth="1.2" opacity="0.25"/>
+        <polygon points="24,9 39,17 39,31 24,39 9,31 9,17"
+          stroke="#2E8B82" strokeWidth="0.8" opacity="0.18"/>
+        <circle cx="24" cy="24" r="8" stroke="#C9933A" strokeWidth="0.7" opacity="0.2"/>
+      </svg>
+    </div>
   )
 }
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
-  const userId = (session?.user as any)?.id
+  const userId  = (session?.user as any)?.id
 
-  const today = new Date()
-  const todayStart = new Date(today); todayStart.setHours(0,0,0,0)
-  const todayEnd   = new Date(today); todayEnd.setHours(23,59,59,999)
+  const today      = new Date()
+  const todayStart = new Date(today); todayStart.setHours(0, 0, 0, 0)
+  const todayEnd   = new Date(today); todayEnd.setHours(23, 59, 59, 999)
 
   const [projects, clients, tasks, todayTasks, diaries, incomes] = await Promise.all([
-    prisma.project.findMany({ where:{ userId } }),
-    prisma.client.findMany({ where:{ userId } }),
-    prisma.task.findMany({ where:{ userId } }),
-    prisma.task.findMany({ where:{ userId, deadline:{ gte:todayStart, lte:todayEnd } }, take:5, orderBy:{ priority:"desc" } }),
-    prisma.diary.findMany({ where:{ userId }, orderBy:{ date:"desc" }, take:4 }),
-    prisma.income.findMany({ where:{ userId }, orderBy:{ date:"desc" }, take:10 }),
+    prisma.project.findMany({ where: { userId } }),
+    prisma.client.findMany({ where: { userId } }),
+    prisma.task.findMany({ where: { userId } }),
+    prisma.task.findMany({
+      where: { userId, deadline: { gte: todayStart, lte: todayEnd } },
+      take: 5, orderBy: { priority: "desc" },
+    }),
+    prisma.diary.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 4 }),
+    prisma.income.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 10 }),
   ])
 
-  const activePr = projects.filter(p=>p.status!=="COMPLETED").length
-  const donePr   = projects.filter(p=>p.status==="COMPLETED").length
-  const pendingT = tasks.filter(t=>t.status!=="DONE").length
-  const doneT    = tasks.filter(t=>t.status==="DONE").length
-  const totalInc = incomes.reduce((s,i)=>s+i.amount,0)
-  const taskPct  = tasks.length ? Math.round((doneT/tasks.length)*100) : 0
+  const activePr   = projects.filter(p => p.status !== "COMPLETED").length
+  const donePr     = projects.filter(p => p.status === "COMPLETED").length
+  const pendingT   = tasks.filter(t => t.status !== "DONE").length
+  const doneT      = tasks.filter(t => t.status === "DONE").length
+  const totalInc   = incomes.reduce((s, i) => s + i.amount, 0)
+  const taskPct    = tasks.length ? Math.round((doneT / tasks.length) * 100) : 0
 
-  const hour = new Date().getHours()
-  const greeting = hour<12 ? "Xayrli tong" : hour<17 ? "Xayrli kun" : "Xayrli kech"
-  const fname = session?.user?.name?.split(" ")[0] ?? "Sarvarbek"
+  const hour     = new Date().getHours()
+  const greeting = hour < 12 ? "Xayrli tong" : hour < 17 ? "Xayrli kun" : "Xayrli kech"
+  const fname    = session?.user?.name?.split(" ")[0] ?? "Sarvarbek"
 
   const STATS = [
-    { title:"Faol Loyihalar",  val:activePr,  sub:`${donePr} tugallangan`,   grad:"from-[#0A2342] to-[#1A3A6B]",   glow:"rgba(10,35,66,0.4)",  href:"/projects" },
-    { title:"Mijozlar",        val:clients.length, sub:"Jami bazada",         grad:"from-[#6D28D9] to-[#4C1D95]",   glow:"rgba(109,40,217,0.4)", href:"/clients" },
-    { title:"Vazifalar",       val:pendingT,  sub:`${taskPct}% bajarildi`,   grad:"from-[#B91C1C] to-[#7F1D1D]",   glow:"rgba(185,28,28,0.4)",  href:"/tasks", pct:taskPct },
-    { title:"Daromad",         val:null, valStr:formatCurrency(totalInc), sub:"Oxirgi 10 ta", grad:"from-[#065F46] to-[#064E3B]", glow:"rgba(6,95,70,0.4)", href:"/finance" },
+    {
+      title: "Faol Loyihalar", val: activePr, sub: `${donePr} tugallangan`,
+      color: "#3B82F6", glow: "rgba(59,130,246,0.3)", emoji: "📐",
+      href: "/projects", pct: null,
+    },
+    {
+      title: "Mijozlar", val: clients.length, sub: "Jami bazada",
+      color: "#8B5CF6", glow: "rgba(139,92,246,0.3)", emoji: "👥",
+      href: "/clients", pct: null,
+    },
+    {
+      title: "Vazifalar", val: pendingT, sub: `${taskPct}% bajarildi`,
+      color: "#F43F5E", glow: "rgba(244,63,94,0.3)", emoji: "✅",
+      href: "/tasks", pct: taskPct,
+    },
+    {
+      title: "Daromad", val: null, valStr: formatCurrency(totalInc), sub: "Oxirgi 10 ta",
+      color: "#22C55E", glow: "rgba(34,197,94,0.3)", emoji: "💰",
+      href: "/finance", pct: null,
+    },
   ]
 
   return (
-    <div className="space-y-7 page-enter">
+    <div className="space-y-8 animate-page-enter">
 
-      {/* ─── HERO ─── */}
-      <div className="relative overflow-hidden rounded-3xl text-white"
-        style={{background:"linear-gradient(135deg,#0A1628 0%,#0e2040 40%,#1a0800 100%)"}}>
-        <HeroArch />
+      {/* ══════════════════════════════════════
+          HERO — 3D canvas + greeting
+      ══════════════════════════════════════ */}
+      <div className="relative overflow-hidden rounded-3xl min-h-[360px] flex"
+        style={{
+          background: "linear-gradient(135deg, #0D1A30 0%, #1A2744 50%, #0A1020 100%)",
+          border: "1px solid rgba(201,147,58,0.18)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,147,58,0.08)",
+        }}>
+
+        {/* Girih pattern bg */}
+        <div className="absolute inset-0 bg-girih opacity-100 pointer-events-none" />
+
+        {/* Ambient glows */}
+        <div className="absolute top-0 left-1/3 w-96 h-48 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse, rgba(201,147,58,0.12), transparent 70%)", filter: "blur(30px)" }} />
+        <div className="absolute bottom-0 right-1/4 w-80 h-40 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse, rgba(46,139,130,0.1), transparent 70%)", filter: "blur(25px)" }} />
+
+        {/* Top gold shimmer line */}
+        <div className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+          style={{ background: "linear-gradient(90deg, transparent, #C9933A, #2E8B82, #C9933A, transparent)" }} />
+
         {/* Floating hexes */}
-        <div className="absolute top-4 left-8 animate-float pointer-events-none"><Hex8 size={32} opacity={0.15}/></div>
-        <div className="absolute bottom-4 left-1/3 animate-float-slow pointer-events-none" style={{animationDelay:"1.5s"}}><Hex8 size={24} opacity={0.1}/></div>
+        <FloatHex style={{ top: "8%",  right: "38%", opacity: 0.6, animation: "float-3d 6s ease-in-out infinite" }} />
+        <FloatHex style={{ bottom: "12%", right: "32%", opacity: 0.4, animation: "float-3d 8s ease-in-out infinite 1s" }} />
 
-        <div className="relative z-10 p-8">
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/>
-                <span className="text-[#DAA520]/60 text-xs tracking-[0.2em] uppercase font-medium">Faol rejim</span>
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight mb-1">{greeting}, {fname}! 👋</h2>
-              <p className="text-[#DAA520]/50 text-sm">Bugungi vazifalar va loyihalarni ko'ring</p>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {[{href:"/reports",label:"📊 Hisobot"},{href:"/contracts",label:"📜 Shartnoma"}].map(({href,label})=>(
-                <Link key={href} href={href}>
-                  <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#DAA520]/10 border border-[#DAA520]/20 hover:bg-[#DAA520]/18 transition-all text-sm font-medium text-white/80 hover:text-white">
-                    {label}
-                  </div>
-                </Link>
-              ))}
-            </div>
+        {/* ── Left: text ── */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center px-10 py-8 max-w-[55%]">
+
+          {/* Live badge */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="dot-gold" />
+            <span className="text-[#C9933A]/60 text-xs tracking-[0.3em] uppercase font-medium">
+              Faol rejim
+            </span>
           </div>
 
-          {/* Gold divider */}
-          <div className="mt-6 pt-5 border-t border-[#DAA520]/10 flex flex-wrap gap-4">
+          {/* Greeting */}
+          <h1 className="text-5xl xl:text-6xl font-black text-[#F5ECD7] leading-tight mb-3"
+            style={{ fontFamily: "'Playfair Display', serif", letterSpacing: "-0.03em" }}>
+            {greeting},<br />
+            <span className="animate-shimmer-gold">{fname}</span>!
+          </h1>
+
+          <p className="text-[#A89070] text-base mb-8 leading-relaxed"
+            style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.1rem" }}>
+            Loyihalaringiz, kundaligingiz va moliyaviy hisobotlaringiz<br />
+            bir joyda — professional arxitektor uchun
+          </p>
+
+          {/* Quick stat pills */}
+          <div className="flex flex-wrap gap-3">
             {[
-              { label:"Faol loyiha",    v:activePr,          emoji:"📐" },
-              { label:"Bugun deadline", v:todayTasks.length, emoji:"⏰" },
-              { label:"Bajarilmagan",  v:pendingT,          emoji:"📋" },
-              { label:"Jami mijoz",     v:clients.length,    emoji:"👥" },
-            ].map(s=>(
-              <div key={s.label} className="flex items-center gap-3 bg-white/[0.05] backdrop-blur-sm rounded-xl px-4 py-3 border border-[#DAA520]/12">
-                <span className="text-xl">{s.emoji}</span>
+              { emoji: "📐", label: "Faol loyiha", val: activePr },
+              { emoji: "⏰", label: "Bugun deadline", val: todayTasks.length },
+              { emoji: "👥", label: "Mijoz", val: clients.length },
+            ].map(s => (
+              <div key={s.label}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                style={{
+                  background: "rgba(201,147,58,0.08)",
+                  border: "1px solid rgba(201,147,58,0.18)",
+                }}>
+                <span className="text-lg">{s.emoji}</span>
                 <div>
-                  <p className="text-xl font-bold leading-none">{s.v}</p>
-                  <p className="text-xs text-[#DAA520]/50 mt-0.5">{s.label}</p>
+                  <p className="text-xl font-black text-[#F5ECD7] leading-none">{s.val}</p>
+                  <p className="text-[10px] text-[#A89070]">{s.label}</p>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Quick links */}
+          <div className="flex gap-3 mt-6">
+            {[
+              { href: "/reports",   label: "📊 Hisobot" },
+              { href: "/contracts", label: "📜 Shartnoma" },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href}>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+                  text-[#C9933A] hover:text-[#F5D08A] transition-colors cursor-pointer"
+                  style={{
+                    background: "rgba(201,147,58,0.06)",
+                    border: "1px solid rgba(201,147,58,0.15)",
+                  }}>
+                  {label} <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right: Three.js 3D scene ── */}
+        <div className="relative flex-1 min-h-[360px]" style={{ minWidth: "40%" }}>
+          <Scene3D className="absolute inset-0 w-full h-full" />
         </div>
       </div>
 
-      {/* ─── STAT CARDS ─── */}
+      {/* Arch divider */}
+      <ArchDivider />
+
+      {/* ══════════════════════════════════════
+          STAT CARDS
+      ══════════════════════════════════════ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS.map((s,i)=>(
+        {STATS.map((s, i) => (
           <Link key={s.title} href={s.href}>
-            <div className={cn("stat-card bg-white dark:bg-[#100d04] border border-[#B8860B]/15 dark:border-[#DAA520]/10 p-5 animate-card")}
-              style={{animationDelay:`${i*.09}s`}}>
-              {/* Gold top line */}
-              <div className={cn("absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r",s.grad)}/>
-              {/* Corner hex */}
-              <div className="absolute top-2 right-2 opacity-10"><Hex8 size={28} opacity={1}/></div>
-              <div className="flex items-start justify-between mb-3">
-                <div className={cn("stat-icon h-11 w-11 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",s.grad)}
-                  style={{boxShadow:`0 8px 20px ${s.glow}`}}>
-                  <span className="text-xl">{["📐","👥","✅","💰"][i]}</span>
-                </div>
-                <ArrowRight className="h-4 w-4 text-[#B8860B]/25 mt-1"/>
+            <div className="stat-luxury p-5 animate-slide-up"
+              style={{ animationDelay: `${i * 0.1}s` }}>
+
+              {/* Top accent */}
+              <div className="absolute top-0 left-0 right-0 h-px"
+                style={{ background: `linear-gradient(90deg, transparent, ${s.color}, transparent)` }} />
+
+              {/* Corner 8-star */}
+              <div className="absolute top-3 right-3 opacity-20">
+                <Star8 size={18} color={s.color} />
               </div>
-              <p className="text-xs font-bold text-[#B8860B]/50 dark:text-amber-500/50 uppercase tracking-wider mb-1">{s.title}</p>
-              <p className={cn("font-bold text-[#2a1500] dark:text-amber-100", s.valStr?"text-lg leading-tight":"text-3xl")}>
+
+              {/* Icon */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="h-12 w-12 rounded-2xl flex items-center justify-center text-2xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${s.color}22, ${s.color}11)`,
+                    border: `1px solid ${s.color}30`,
+                    boxShadow: `0 8px 24px ${s.glow}`,
+                  }}>
+                  {s.emoji}
+                </div>
+                <ArrowRight className="h-4 w-4 mt-1 opacity-25" style={{ color: s.color }} />
+              </div>
+
+              {/* Value */}
+              <p className="text-xs font-bold uppercase tracking-[0.15em] mb-1"
+                style={{ color: `${s.color}80` }}>
+                {s.title}
+              </p>
+              <p className="font-black text-[#F5ECD7]"
+                style={{
+                  fontSize: s.valStr ? "1.2rem" : "2.2rem",
+                  fontFamily: "'Playfair Display', serif",
+                  lineHeight: 1.1,
+                }}>
                 {s.valStr ?? s.val}
               </p>
-              <p className="text-xs text-[#B8860B]/40 mt-1">{s.sub}</p>
-              {s.pct!==undefined && (
-                <div className="mt-3 h-1.5 bg-[#B8860B]/10 rounded-full overflow-hidden">
-                  <div className={cn("h-full bg-gradient-to-r rounded-full transition-all duration-1000",s.grad)} style={{width:`${s.pct}%`}}/>
+              <p className="text-[11px] mt-1" style={{ color: "#A89070" }}>{s.sub}</p>
+
+              {/* Progress */}
+              {s.pct !== null && (
+                <div className="mt-3 h-1.5 rounded-full overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full transition-all duration-1000"
+                    style={{
+                      width: `${s.pct}%`,
+                      background: `linear-gradient(90deg, ${s.color}, ${s.color}aa)`,
+                      boxShadow: `0 0 8px ${s.glow}`,
+                    }} />
                 </div>
               )}
             </div>
@@ -155,88 +272,153 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* ─── 3 COLUMNS ─── */}
+      {/* ══════════════════════════════════════
+          3 COLUMNS
+      ══════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Today Tasks */}
-        <ColCard title="Bugungi Deadline" emoji="⏰" count={todayTasks.length} href="/tasks" sub="bugungi">
-          {todayTasks.length===0
-            ? <EmptyState emoji="🎉" text="Bugun deadline yo'q!"/>
-            : todayTasks.map(t=>(
-              <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors">
-                <div className={cn("h-2 w-2 rounded-full flex-shrink-0",
-                  t.priority==="HIGH"?"bg-red-500":t.priority==="MEDIUM"?"bg-blue-500":"bg-slate-300")}/>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm font-medium truncate text-[#2a1500] dark:text-amber-100",t.status==="DONE"&&"line-through opacity-50")}>{t.title}</p>
-                  <p className="text-xs text-[#B8860B]/40">{t.status==="DONE"?"✅":t.status==="IN_PROGRESS"?"🔄":"📋"} {t.status==="DONE"?"Bajarildi":t.status==="IN_PROGRESS"?"Jarayonda":"Kutilmoqda"}</p>
-                </div>
+
+        {/* ── Today tasks ── */}
+        <ColCard title="Bugungi Deadline" emoji="⏰" count={todayTasks.length} href="/tasks">
+          {todayTasks.length === 0 ? (
+            <EmptyCol emoji="🎉" text="Bugun deadline yo'q!" />
+          ) : todayTasks.map(t => (
+            <div key={t.id}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors group"
+              style={{ borderBottom: "1px solid rgba(201,147,58,0.06)" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(201,147,58,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+              <div className="h-2 w-2 rounded-full flex-shrink-0"
+                style={{
+                  background: t.priority === "HIGH" ? "#F43F5E" : t.priority === "MEDIUM" ? "#3B82F6" : "#64748B",
+                  boxShadow: t.priority === "HIGH" ? "0 0 6px rgba(244,63,94,0.6)" : "none",
+                }} />
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-sm font-medium truncate text-[#F5ECD7]",
+                  t.status === "DONE" && "line-through opacity-40")}>{t.title}</p>
+                <p className="text-[10px] text-[#A89070]">
+                  {t.status === "DONE" ? "✅ Bajarildi" : t.status === "IN_PROGRESS" ? "🔄 Jarayonda" : "📋 Kutilmoqda"}
+                </p>
               </div>
-            ))}
+            </div>
+          ))}
         </ColCard>
 
-        {/* Active Projects */}
-        <ColCard title="Faol Loyihalar" emoji="📐" count={activePr} href="/projects" sub="faol">
-          {projects.filter(p=>p.status!=="COMPLETED").slice(0,5).map(p=>{
-            const s=PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
-            const ov=p.deadline&&new Date(p.deadline)<new Date()
+        {/* ── Active projects ── */}
+        <ColCard title="Faol Loyihalar" emoji="📐" count={activePr} href="/projects">
+          {projects.filter(p => p.status !== "COMPLETED").slice(0, 5).map(p => {
+            const s      = PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
+            const overdue = p.deadline && new Date(p.deadline) < new Date()
             return (
               <Link key={p.id} href={`/projects/${p.id}`}>
-                <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors cursor-pointer group">
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer group transition-colors"
+                  style={{ borderBottom: "1px solid rgba(201,147,58,0.06)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(201,147,58,0.05)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#2a1500] dark:text-amber-100 truncate group-hover:text-[#B8860B] transition-colors">{p.name}</p>
-                    {p.deadline&&<p className={cn("text-xs",ov?"text-red-500":"text-[#B8860B]/40")}>{ov?"⚠️ ":"📅 "}{formatDate(p.deadline)}</p>}
+                    <p className="text-sm font-medium text-[#F5ECD7] truncate group-hover:text-[#C9933A] transition-colors">{p.name}</p>
+                    {p.deadline && (
+                      <p className={cn("text-[10px]", overdue ? "text-[#F43F5E]" : "text-[#A89070]")}>
+                        {overdue ? "⚠️ " : "📅 "}{formatDate(p.deadline)}
+                      </p>
+                    )}
                   </div>
-                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0",s?.color)}>{s?.label}</span>
+                  <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0", s?.color)}>
+                    {s?.label}
+                  </span>
                 </div>
               </Link>
             )
           })}
-          {!projects.filter(p=>p.status!=="COMPLETED").length&&<EmptyState emoji="📐" text="Faol loyiha yo'q"/>}
+          {!projects.filter(p => p.status !== "COMPLETED").length && (
+            <EmptyCol emoji="📐" text="Faol loyiha yo'q" />
+          )}
         </ColCard>
 
-        {/* Diary */}
-        <ColCard title="Kundalik" emoji="📖" count={diaries.length} href="/diary" sub="oxirgi">
-          {diaries.length===0
-            ? <EmptyState emoji="📖" text="Yozuv yo'q"/>
-            : diaries.map(d=>(
-              <Link key={d.id} href={`/diary/${d.id}`}>
-                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors cursor-pointer group">
-                  <div className="w-10 text-center bg-emerald-50 dark:bg-emerald-950/30 rounded-xl py-1.5 flex-shrink-0">
-                    <p className="text-sm font-bold text-emerald-700 leading-none">{new Date(d.date).getDate()}</p>
-                    <p className="text-[9px] text-emerald-500 uppercase">{new Date(d.date).toLocaleString("uz-UZ",{month:"short"})}</p>
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p className="text-sm font-medium text-[#2a1500] dark:text-amber-100 truncate group-hover:text-[#B8860B] transition-colors">{d.title}</p>
-                    {d.description&&<p className="text-xs text-[#B8860B]/40 line-clamp-1">{d.description}</p>}
-                  </div>
+        {/* ── Recent diary ── */}
+        <ColCard title="Oxirgi Kundalik" emoji="📖" count={diaries.length} href="/diary">
+          {diaries.length === 0 ? (
+            <EmptyCol emoji="📖" text="Kundalik yozuvi yo'q" />
+          ) : diaries.map(d => (
+            <Link key={d.id} href={`/diary/${d.id}`}>
+              <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-colors"
+                style={{ borderBottom: "1px solid rgba(201,147,58,0.06)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(46,139,130,0.05)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center"
+                  style={{ background: "rgba(46,139,130,0.15)", border: "1px solid rgba(46,139,130,0.25)" }}>
+                  <p className="text-sm font-black text-[#2E8B82] leading-none">{new Date(d.date).getDate()}</p>
+                  <p className="text-[8px] text-[#2E8B82]/70 uppercase">
+                    {new Date(d.date).toLocaleString("uz-UZ", { month: "short" })}
+                  </p>
                 </div>
-              </Link>
-            ))}
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-sm font-medium text-[#F5ECD7] truncate group-hover:text-[#2E8B82] transition-colors">{d.title}</p>
+                  {d.description && <p className="text-[10px] text-[#A89070] line-clamp-1">{d.description}</p>}
+                </div>
+              </div>
+            </Link>
+          ))}
         </ColCard>
       </div>
 
-      {/* ─── STATUS BREAKDOWN ─── */}
-      <div className="arch-card">
-        <div className="px-6 py-4 border-b border-[#B8860B]/10 flex items-center gap-3">
-          <Hex8 size={28} opacity={0.4}/>
+      {/* Arch divider */}
+      <ArchDivider />
+
+      {/* ══════════════════════════════════════
+          STATUS BREAKDOWN
+      ══════════════════════════════════════ */}
+      <div className="card-luxury">
+        <div className="px-6 py-5 flex items-center gap-4"
+          style={{ borderBottom: "1px solid rgba(201,147,58,0.1)" }}>
+          <Star8 size={20} />
           <div>
-            <p className="text-sm font-bold text-[#2a1500] dark:text-amber-100">Loyihalar Holati</p>
-            <p className="text-xs text-[#B8860B]/40">Statistika</p>
+            <h3 className="text-base font-black text-[#F5ECD7]"
+              style={{ fontFamily: "'Playfair Display', serif" }}>
+              Loyihalar Holati
+            </h3>
+            <p className="text-[11px] text-[#A89070]">
+              {projects.length} ta loyiha bo'yicha statistika
+            </p>
           </div>
         </div>
         <div className="p-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {Object.entries(PROJECT_STATUSES).map(([key,val])=>{
-              const cnt=projects.filter(p=>p.status===key).length
-              const pct=projects.length?Math.round((cnt/projects.length)*100):0
+            {Object.entries(PROJECT_STATUSES).map(([key, val]) => {
+              const count = projects.filter(p => p.status === key).length
+              const pct   = projects.length ? Math.round((count / projects.length) * 100) : 0
               return (
                 <Link key={key} href={`/projects?status=${key}`}>
-                  <div className="group text-center p-4 rounded-2xl bg-[#B8860B]/[0.04] hover:bg-[#B8860B]/[0.08] border border-transparent hover:border-[#B8860B]/20 transition-all cursor-pointer">
-                    <p className="text-3xl font-bold text-[#2a1500] dark:text-amber-100 group-hover:text-[#B8860B] transition-colors">{cnt}</p>
-                    <span className={cn("inline-block text-xs px-2 py-0.5 rounded-full font-semibold mt-1 mb-2",val.color)}>{val.label}</span>
-                    <div className="h-1 bg-[#B8860B]/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#B8860B] to-[#0A2342] rounded-full transition-all duration-700" style={{width:`${pct}%`}}/>
+                  <div className="group text-center p-4 rounded-2xl cursor-pointer transition-all"
+                    style={{
+                      background: "rgba(201,147,58,0.04)",
+                      border: "1px solid rgba(201,147,58,0.08)",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = "rgba(201,147,58,0.1)"
+                      e.currentTarget.style.borderColor = "rgba(201,147,58,0.25)"
+                      e.currentTarget.style.transform = "translateY(-4px)"
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "rgba(201,147,58,0.04)"
+                      e.currentTarget.style.borderColor = "rgba(201,147,58,0.08)"
+                      e.currentTarget.style.transform = ""
+                    }}>
+                    <p className="text-3xl font-black text-[#F5ECD7] leading-none mb-2"
+                      style={{ fontFamily: "'Playfair Display', serif" }}>
+                      {count}
+                    </p>
+                    <span className={cn("inline-block text-[10px] px-2 py-0.5 rounded-full font-bold", val.color)}>
+                      {val.label}
+                    </span>
+                    <div className="mt-2 h-1 rounded-full overflow-hidden"
+                      style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${pct}%`,
+                          background: "linear-gradient(90deg, #C9933A, #2E8B82)",
+                        }} />
                     </div>
-                    <p className="text-[10px] text-[#B8860B]/30 mt-1">{pct}%</p>
+                    <p className="text-[9px] text-[#A89070]/60 mt-1">{pct}%</p>
                   </div>
                 </Link>
               )
@@ -244,36 +426,51 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
     </div>
   )
 }
 
-function ColCard({ title,emoji,count,href,sub,children }: { title:string;emoji:string;count:number;href:string;sub:string;children:React.ReactNode }) {
+/* ── Reusable column card ── */
+function ColCard({ title, emoji, count, href, children }: {
+  title: string; emoji: string; count: number; href: string; children: React.ReactNode
+}) {
   return (
-    <div className="arch-card">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#B8860B]/10">
+    <div className="card-luxury overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: "1px solid rgba(201,147,58,0.1)" }}>
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-[#B8860B]/8 border border-[#B8860B]/15 flex items-center justify-center text-base">{emoji}</div>
+          <div className="h-8 w-8 rounded-xl flex items-center justify-center text-base"
+            style={{
+              background: "rgba(201,147,58,0.1)",
+              border: "1px solid rgba(201,147,58,0.2)",
+            }}>
+            {emoji}
+          </div>
           <div>
-            <p className="text-sm font-bold text-[#2a1500] dark:text-amber-100">{title}</p>
-            <p className="text-xs text-[#B8860B]/40">{count} ta {sub}</p>
+            <p className="text-sm font-black text-[#F5ECD7]"
+              style={{ fontFamily: "'Playfair Display', serif" }}>
+              {title}
+            </p>
+            <p className="text-[10px] text-[#A89070]">{count} ta</p>
           </div>
         </div>
         <Link href={href}>
-          <span className="text-xs text-[#B8860B] hover:text-[#966B08] font-medium flex items-center gap-1">
-            Barchasi <ChevronRight className="h-3 w-3"/>
+          <span className="text-[11px] text-[#C9933A] hover:text-[#F5D08A] transition-colors flex items-center gap-1 font-medium">
+            Barchasi <ChevronRight className="h-3 w-3" />
           </span>
         </Link>
       </div>
-      <div className="p-4 space-y-1">{children}</div>
+      <div className="py-2">{children}</div>
     </div>
   )
 }
-function EmptyState({ emoji,text }: { emoji:string;text:string }) {
+
+function EmptyCol({ emoji, text }: { emoji: string; text: string }) {
   return (
-    <div className="text-center py-8 text-[#B8860B]/30">
-      <div className="text-3xl mb-2">{emoji}</div>
-      <p className="text-sm font-medium">{text}</p>
+    <div className="flex flex-col items-center justify-center py-8 text-[#A89070]/40">
+      <span className="text-3xl mb-2 opacity-50">{emoji}</span>
+      <p className="text-xs font-medium">{text}</p>
     </div>
   )
 }
