@@ -24,6 +24,7 @@ model User {
   expenses  Expense[]
   documents Document[]
   clients   Client[]
+  contracts Contract[]
 }
 
 model Client {
@@ -41,6 +42,7 @@ model Client {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   projects Project[]
   payments Income[]
+  contracts Contract[]
 }
 
 model Project {
@@ -67,6 +69,7 @@ model Project {
   tasks      Task[]
   incomes    Income[]
   diaryLinks DiaryProject[]
+  contracts  Contract[]
 }
 
 model ProjectFile {
@@ -178,4 +181,38 @@ model Document {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+model Contract {
+  id              String   @id @default(cuid())
+  contractNumber  String
+  title           String
+  clientName      String
+  clientPhone     String?
+  clientEmail     String?
+  clientAddress   String?
+  clientPassport  String?
+  architectName   String
+  architectPhone  String?
+  architectAddress String?
+  projectName     String
+  projectAddress  String?
+  projectType     String?
+  startDate       DateTime?
+  endDate         DateTime?
+  totalAmount     Float
+  advanceAmount   Float?
+  workItems       String
+  terms           String?
+  status          String   @default("DRAFT")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
 }
