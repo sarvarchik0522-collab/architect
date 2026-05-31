@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
       where: { userId, date: { gte: startDate, lte: endDate } },
       orderBy: { date: "desc" },
     }),
+
     prisma.client.findMany({ where: { userId } }),
     prisma.client.findMany({
       where: { userId, createdAt: { gte: startDate, lte: endDate } },
@@ -106,7 +107,7 @@ export async function GET(req: NextRequest) {
     period: { type, year, month, week, startDate, endDate },
     finance: { totalIncome, totalExpense, profit, incomeByCategory, expenseByCategory, incomeByProject },
     projects: { total: projects.length, byStatus: projectsByStatus, list: projects },
-    tasks: { total: tasks.length, done: tasksDone, inProgress: tasksInProgress, todo: tasksTodo },
+    tasks: { total: tasks.length, done: tasksDone, inProgress: tasksInProgress, todo: tasksTodo, list: tasks },
     diary: { total: diaries.length, list: diaries },
     clients: { total: clients.length, active: activeClients.length, newInPeriod: newClients.length, activeList: activeClients },
     incomes,

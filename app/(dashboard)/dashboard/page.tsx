@@ -2,161 +2,152 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { FolderKanban, Users, CheckSquare, TrendingUp, ArrowRight, BookOpen, Clock, ChevronRight, BarChart3, FileSignature } from "lucide-react"
+import { ArrowRight, ChevronRight } from "lucide-react"
 import { cn, formatDate, formatCurrency, PROJECT_STATUSES } from "@/lib/utils"
 
-// Milliy geometrik SVG ornament
-function GirihBg() {
+// Arch SVG for hero bg
+function HeroArch() {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <svg className="absolute right-0 top-0 opacity-[0.07] animate-rotate-slow" width="400" height="400" viewBox="0 0 200 200">
-        <polygon points="100,10 190,55 190,145 100,190 10,145 10,55" fill="none" stroke="currentColor" strokeWidth="1"/>
-        <polygon points="100,25 175,62 175,138 100,175 25,138 25,62" fill="none" stroke="currentColor" strokeWidth="0.7"/>
-        <polygon points="100,40 160,70 160,130 100,160 40,130 40,70" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-        <circle cx="100" cy="100" r="35" fill="none" stroke="currentColor" strokeWidth="0.5"/>
-        <line x1="100" y1="10" x2="100" y2="190" stroke="currentColor" strokeWidth="0.3"/>
-        <line x1="10" y1="100" x2="190" y2="100" stroke="currentColor" strokeWidth="0.3"/>
-        <line x1="10" y1="55" x2="190" y2="145" stroke="currentColor" strokeWidth="0.3"/>
-        <line x1="190" y1="55" x2="10" y2="145" stroke="currentColor" strokeWidth="0.3"/>
-      </svg>
-      <svg className="absolute left-4 bottom-4 opacity-[0.05] animate-counter" width="200" height="200" viewBox="0 0 100 100">
-        <polygon points="50,5 95,27 95,73 50,95 5,73 5,27" fill="none" stroke="currentColor" strokeWidth="1"/>
-        <polygon points="50,15 85,32 85,68 50,85 15,68 15,32" fill="none" stroke="currentColor" strokeWidth="0.6"/>
-        <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" strokeWidth="0.6"/>
-      </svg>
-    </div>
+    <svg className="absolute right-0 top-0 h-full w-auto opacity-[0.08] pointer-events-none" viewBox="0 0 400 300" fill="none">
+      <path d="M80 300 L80 130 Q80 40 200 40 Q320 40 320 130 L320 300" stroke="#DAA520" strokeWidth="2"/>
+      <path d="M120 300 L120 140 Q120 70 200 70 Q280 70 280 140 L280 300" stroke="#DAA520" strokeWidth="1.2"/>
+      <polygon points="200,32 216,42 200,52 184,42" fill="#DAA520" opacity="0.6"/>
+      <polygon points="200,90 212,96 216,110 212,124 200,130 188,124 184,110 188,96" fill="none" stroke="#DAA520" strokeWidth="1.2"/>
+      <circle cx="200" cy="110" r="10" fill="none" stroke="#DAA520" strokeWidth="0.8"/>
+      <line x1="80" y1="300" x2="80" y2="200" stroke="#DAA520" strokeWidth="3" opacity="0.4"/>
+      <line x1="320" y1="300" x2="320" y2="200" stroke="#DAA520" strokeWidth="3" opacity="0.4"/>
+      <line x1="80" y1="185" x2="320" y2="185" stroke="#DAA520" strokeWidth="0.8" strokeDasharray="5 3" opacity="0.3"/>
+      {[0,1,2,3,4].map(i=>(
+        <line key={i} x1={100+i*45} y1="200" x2={100+i*45} y2="300" stroke="#DAA520" strokeWidth="0.4" opacity="0.2"/>
+      ))}
+    </svg>
+  )
+}
+
+// Small 8-sided ornament
+function Hex8({ size=40, opacity=0.5 }: { size?:number; opacity?:number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" style={{opacity}}>
+      <polygon points="20,2 38,11 38,29 20,38 2,29 2,11" stroke="#DAA520" strokeWidth="1.2"/>
+      <polygon points="20,8 32,14 32,26 20,32 8,26 8,14" stroke="#DAA520" strokeWidth="0.7"/>
+      <circle cx="20" cy="20" r="6" stroke="#DAA520" strokeWidth="0.7"/>
+      <circle cx="20" cy="20" r="2" fill="#DAA520"/>
+    </svg>
   )
 }
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
-  const userId  = (session?.user as any)?.id
+  const userId = (session?.user as any)?.id
 
-  const today      = new Date()
+  const today = new Date()
   const todayStart = new Date(today); todayStart.setHours(0,0,0,0)
   const todayEnd   = new Date(today); todayEnd.setHours(23,59,59,999)
 
   const [projects, clients, tasks, todayTasks, diaries, incomes] = await Promise.all([
-    prisma.project.findMany({ where: { userId } }),
-    prisma.client.findMany({ where: { userId } }),
-    prisma.task.findMany({ where: { userId } }),
-    prisma.task.findMany({ where: { userId, deadline: { gte: todayStart, lte: todayEnd } }, take: 5, orderBy: { priority: "desc" } }),
-    prisma.diary.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 4 }),
-    prisma.income.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 10 }),
+    prisma.project.findMany({ where:{ userId } }),
+    prisma.client.findMany({ where:{ userId } }),
+    prisma.task.findMany({ where:{ userId } }),
+    prisma.task.findMany({ where:{ userId, deadline:{ gte:todayStart, lte:todayEnd } }, take:5, orderBy:{ priority:"desc" } }),
+    prisma.diary.findMany({ where:{ userId }, orderBy:{ date:"desc" }, take:4 }),
+    prisma.income.findMany({ where:{ userId }, orderBy:{ date:"desc" }, take:10 }),
   ])
 
-  const activeProjects    = projects.filter(p => p.status !== "COMPLETED").length
-  const completedProjects = projects.filter(p => p.status === "COMPLETED").length
-  const pendingTasks      = tasks.filter(t => t.status !== "DONE").length
-  const doneTasks         = tasks.filter(t => t.status === "DONE").length
-  const totalIncome       = incomes.reduce((s, i) => s + i.amount, 0)
-  const taskProgress      = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0
+  const activePr = projects.filter(p=>p.status!=="COMPLETED").length
+  const donePr   = projects.filter(p=>p.status==="COMPLETED").length
+  const pendingT = tasks.filter(t=>t.status!=="DONE").length
+  const doneT    = tasks.filter(t=>t.status==="DONE").length
+  const totalInc = incomes.reduce((s,i)=>s+i.amount,0)
+  const taskPct  = tasks.length ? Math.round((doneT/tasks.length)*100) : 0
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? "Xayrli tong" : hour < 17 ? "Xayrli kun" : "Xayrli kech"
-  const firstName = session?.user?.name?.split(" ")[0] ?? "Arxitektor"
+  const greeting = hour<12 ? "Xayrli tong" : hour<17 ? "Xayrli kun" : "Xayrli kech"
+  const fname = session?.user?.name?.split(" ")[0] ?? "Sarvarbek"
 
   const STATS = [
-    { title: "Faol Loyihalar",  value: activeProjects,  sub: `${completedProjects} tugallangan`,
-      icon: FolderKanban, grad: "from-blue-700 to-blue-900",   bg: "bg-blue-50 dark:bg-blue-950/30",   text: "text-blue-600", href: "/projects" },
-    { title: "Mijozlar",        value: clients.length,  sub: "Jami bazada",
-      icon: Users,        grad: "from-violet-700 to-violet-900", bg: "bg-violet-50 dark:bg-violet-950/30", text: "text-violet-600", href: "/clients" },
-    { title: "Vazifalar",       value: pendingTasks,    sub: `${taskProgress}% bajarildi`,
-      icon: CheckSquare,  grad: "from-rose-600 to-rose-800",   bg: "bg-rose-50 dark:bg-rose-950/30",   text: "text-rose-600", href: "/tasks", progress: taskProgress },
-    { title: "Daromad",         value: null, valueStr: formatCurrency(totalIncome), sub: "Oxirgi 10 ta",
-      icon: TrendingUp,   grad: "from-emerald-600 to-emerald-800", bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-600", href: "/finance" },
+    { title:"Faol Loyihalar",  val:activePr,  sub:`${donePr} tugallangan`,   grad:"from-[#0A2342] to-[#1A3A6B]",   glow:"rgba(10,35,66,0.4)",  href:"/projects" },
+    { title:"Mijozlar",        val:clients.length, sub:"Jami bazada",         grad:"from-[#6D28D9] to-[#4C1D95]",   glow:"rgba(109,40,217,0.4)", href:"/clients" },
+    { title:"Vazifalar",       val:pendingT,  sub:`${taskPct}% bajarildi`,   grad:"from-[#B91C1C] to-[#7F1D1D]",   glow:"rgba(185,28,28,0.4)",  href:"/tasks", pct:taskPct },
+    { title:"Daromad",         val:null, valStr:formatCurrency(totalInc), sub:"Oxirgi 10 ta", grad:"from-[#065F46] to-[#064E3B]", glow:"rgba(6,95,70,0.4)", href:"/finance" },
   ]
 
   return (
-    <div className="space-y-8 page-enter">
-      {/* ── Hero banner ── */}
-      <div className={cn(
-        "relative overflow-hidden rounded-3xl p-8 text-white",
-        "bg-gradient-to-br from-[#8a5a00] via-[#6b3f00] to-[#1a3a6b]"
-      )}>
-        <GirihBg />
+    <div className="space-y-7 page-enter">
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-amber-200/70 text-xs font-medium tracking-wider uppercase">Faol</span>
+      {/* ─── HERO ─── */}
+      <div className="relative overflow-hidden rounded-3xl text-white"
+        style={{background:"linear-gradient(135deg,#0A1628 0%,#0e2040 40%,#1a0800 100%)"}}>
+        <HeroArch />
+        {/* Floating hexes */}
+        <div className="absolute top-4 left-8 animate-float pointer-events-none"><Hex8 size={32} opacity={0.15}/></div>
+        <div className="absolute bottom-4 left-1/3 animate-float-slow pointer-events-none" style={{animationDelay:"1.5s"}}><Hex8 size={24} opacity={0.1}/></div>
+
+        <div className="relative z-10 p-8">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/>
+                <span className="text-[#DAA520]/60 text-xs tracking-[0.2em] uppercase font-medium">Faol rejim</span>
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight mb-1">{greeting}, {fname}! 👋</h2>
+              <p className="text-[#DAA520]/50 text-sm">Bugungi vazifalar va loyihalarni ko'ring</p>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight mb-1">
-              {greeting}, {firstName}! 👋
-            </h2>
-            <p className="text-amber-200/70 text-sm capitalize">
-              {today.toLocaleDateString("uz-UZ", { weekday:"long", year:"numeric", month:"long", day:"numeric" })}
-            </p>
+            <div className="flex gap-2 flex-wrap">
+              {[{href:"/reports",label:"📊 Hisobot"},{href:"/contracts",label:"📜 Shartnoma"}].map(({href,label})=>(
+                <Link key={href} href={href}>
+                  <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#DAA520]/10 border border-[#DAA520]/20 hover:bg-[#DAA520]/18 transition-all text-sm font-medium text-white/80 hover:text-white">
+                    {label}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-          {/* Quick links */}
-          <div className="flex gap-2 flex-wrap">
+
+          {/* Gold divider */}
+          <div className="mt-6 pt-5 border-t border-[#DAA520]/10 flex flex-wrap gap-4">
             {[
-              { href: "/reports",   label: "Hisobot", icon: BarChart3 },
-              { href: "/contracts", label: "Shartnoma", icon: FileSignature },
-            ].map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href}>
-                <div className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2.5 transition-all cursor-pointer">
-                  <Icon className="h-4 w-4 text-amber-200" />
-                  <span className="text-sm font-medium text-white">{label}</span>
+              { label:"Faol loyiha",    v:activePr,          emoji:"📐" },
+              { label:"Bugun deadline", v:todayTasks.length, emoji:"⏰" },
+              { label:"Bajarilmagan",  v:pendingT,          emoji:"📋" },
+              { label:"Jami mijoz",     v:clients.length,    emoji:"👥" },
+            ].map(s=>(
+              <div key={s.label} className="flex items-center gap-3 bg-white/[0.05] backdrop-blur-sm rounded-xl px-4 py-3 border border-[#DAA520]/12">
+                <span className="text-xl">{s.emoji}</span>
+                <div>
+                  <p className="text-xl font-bold leading-none">{s.v}</p>
+                  <p className="text-xs text-[#DAA520]/50 mt-0.5">{s.label}</p>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
-
-        {/* Bottom quick stats */}
-        <div className="relative z-10 flex flex-wrap gap-4 mt-6 pt-6 border-t border-white/10">
-          {[
-            { label: "Faol loyiha",    value: activeProjects,     emoji: "📐" },
-            { label: "Bugun deadline", value: todayTasks.length,  emoji: "⏰" },
-            { label: "Bajarilmagan",   value: pendingTasks,       emoji: "📋" },
-            { label: "Jami mijoz",     value: clients.length,     emoji: "👥" },
-          ].map(s => (
-            <div key={s.label} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/15">
-              <span className="text-2xl">{s.emoji}</span>
-              <div>
-                <p className="text-xl font-bold leading-none">{s.value}</p>
-                <p className="text-xs text-amber-200/70 mt-0.5">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* ── Stat cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {STATS.map((s, i) => (
+      {/* ─── STAT CARDS ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {STATS.map((s,i)=>(
           <Link key={s.title} href={s.href}>
-            <div className={cn("stat-card bg-white dark:bg-[#120e04] border border-[#e8d8b0] dark:border-[#2a1e08] p-5 animate-card")}
-              style={{ animationDelay: `${i * 0.1}s` }}>
+            <div className={cn("stat-card bg-white dark:bg-[#100d04] border border-[#B8860B]/15 dark:border-[#DAA520]/10 p-5 animate-card")}
+              style={{animationDelay:`${i*.09}s`}}>
               {/* Gold top line */}
-              <div className={cn("absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r", s.grad)} />
-              {/* Corner ornament */}
-              <div className="absolute top-2 right-2 opacity-10">
-                <svg width="24" height="24" viewBox="0 0 24 24">
-                  <polygon points="12,2 22,7 22,17 12,22 2,17 2,7" fill="none" stroke="currentColor" strokeWidth="1"/>
-                  <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="0.7"/>
-                </svg>
-              </div>
-
+              <div className={cn("absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r",s.grad)}/>
+              {/* Corner hex */}
+              <div className="absolute top-2 right-2 opacity-10"><Hex8 size={28} opacity={1}/></div>
               <div className="flex items-start justify-between mb-3">
-                <div className={cn("stat-icon h-11 w-11 rounded-2xl flex items-center justify-center shadow-md bg-gradient-to-br", s.grad)}>
-                  <s.icon className="h-5 w-5 text-white" />
+                <div className={cn("stat-icon h-11 w-11 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",s.grad)}
+                  style={{boxShadow:`0 8px 20px ${s.glow}`}}>
+                  <span className="text-xl">{["📐","👥","✅","💰"][i]}</span>
                 </div>
-                <ArrowRight className="h-4 w-4 text-amber-300/40 mt-1" />
+                <ArrowRight className="h-4 w-4 text-[#B8860B]/25 mt-1"/>
               </div>
-
-              <p className="text-xs font-semibold text-amber-800/60 dark:text-amber-400/60 mb-1">{s.title}</p>
-              <p className={cn("font-bold text-[#3d2800] dark:text-amber-100", s.valueStr ? "text-lg leading-tight" : "text-3xl")}>
-                {s.valueStr ?? s.value}
+              <p className="text-xs font-bold text-[#B8860B]/50 dark:text-amber-500/50 uppercase tracking-wider mb-1">{s.title}</p>
+              <p className={cn("font-bold text-[#2a1500] dark:text-amber-100", s.valStr?"text-lg leading-tight":"text-3xl")}>
+                {s.valStr ?? s.val}
               </p>
-              <p className="text-xs text-amber-700/50 dark:text-amber-500/50 mt-1">{s.sub}</p>
-
-              {s.progress !== undefined && (
-                <div className="mt-3 h-1.5 bg-amber-100 dark:bg-amber-950/50 rounded-full overflow-hidden">
-                  <div className={cn("h-full bg-gradient-to-r rounded-full transition-all duration-1000", s.grad)}
-                    style={{ width: `${s.progress}%` }} />
+              <p className="text-xs text-[#B8860B]/40 mt-1">{s.sub}</p>
+              {s.pct!==undefined && (
+                <div className="mt-3 h-1.5 bg-[#B8860B]/10 rounded-full overflow-hidden">
+                  <div className={cn("h-full bg-gradient-to-r rounded-full transition-all duration-1000",s.grad)} style={{width:`${s.pct}%`}}/>
                 </div>
               )}
             </div>
@@ -164,134 +155,88 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* ── 3 columns ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today tasks */}
-        <div className="card-gold">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8d8b0]/60 dark:border-[#2a1e08]/60">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-base">⏰</div>
-              <div>
-                <p className="text-sm font-bold text-[#3d2800] dark:text-amber-100">Bugungi Deadline</p>
-                <p className="text-xs text-amber-700/50">{todayTasks.length} ta vazifa</p>
-              </div>
-            </div>
-            <Link href="/tasks"><span className="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">Barchasi <ChevronRight className="h-3 w-3"/></span></Link>
-          </div>
-          <div className="p-4 space-y-2">
-            {todayTasks.length === 0 ? (
-              <div className="text-center py-8 text-amber-400/50">
-                <div className="text-3xl mb-2">🎉</div>
-                <p className="text-sm font-medium">Bugun deadline yo'q!</p>
-              </div>
-            ) : todayTasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors group">
+      {/* ─── 3 COLUMNS ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Today Tasks */}
+        <ColCard title="Bugungi Deadline" emoji="⏰" count={todayTasks.length} href="/tasks" sub="bugungi">
+          {todayTasks.length===0
+            ? <EmptyState emoji="🎉" text="Bugun deadline yo'q!"/>
+            : todayTasks.map(t=>(
+              <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors">
                 <div className={cn("h-2 w-2 rounded-full flex-shrink-0",
-                  t.priority==="HIGH" ? "bg-red-500" : t.priority==="MEDIUM" ? "bg-blue-500" : "bg-slate-300")} />
+                  t.priority==="HIGH"?"bg-red-500":t.priority==="MEDIUM"?"bg-blue-500":"bg-slate-300")}/>
                 <div className="flex-1 min-w-0">
-                  <p className={cn("text-sm font-medium truncate text-[#3d2800] dark:text-amber-100", t.status==="DONE" && "line-through opacity-50")}>{t.title}</p>
-                  <p className="text-xs text-amber-600/50">{t.status==="DONE"?"✅ Bajarildi":t.status==="IN_PROGRESS"?"🔄 Jarayonda":"📋 Kutilmoqda"}</p>
+                  <p className={cn("text-sm font-medium truncate text-[#2a1500] dark:text-amber-100",t.status==="DONE"&&"line-through opacity-50")}>{t.title}</p>
+                  <p className="text-xs text-[#B8860B]/40">{t.status==="DONE"?"✅":t.status==="IN_PROGRESS"?"🔄":"📋"} {t.status==="DONE"?"Bajarildi":t.status==="IN_PROGRESS"?"Jarayonda":"Kutilmoqda"}</p>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+        </ColCard>
 
-        {/* Active projects */}
-        <div className="card-gold">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8d8b0]/60 dark:border-[#2a1e08]/60">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-base">📐</div>
-              <div>
-                <p className="text-sm font-bold text-[#3d2800] dark:text-amber-100">Faol Loyihalar</p>
-                <p className="text-xs text-amber-700/50">{activeProjects} ta loyiha</p>
-              </div>
-            </div>
-            <Link href="/projects"><span className="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">Barchasi <ChevronRight className="h-3 w-3"/></span></Link>
-          </div>
-          <div className="p-4 space-y-2">
-            {projects.filter(p => p.status !== "COMPLETED").slice(0, 5).map(p => {
-              const s = PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
-              const overdue = p.deadline && new Date(p.deadline) < new Date()
-              return (
-                <Link key={p.id} href={`/projects/${p.id}`}>
-                  <div className="flex items-center justify-between p-3 rounded-xl hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors cursor-pointer group">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#3d2800] dark:text-amber-100 truncate group-hover:text-amber-700 transition-colors">{p.name}</p>
-                      {p.deadline && <p className={cn("text-xs", overdue ? "text-red-500" : "text-amber-600/50")}>
-                        {overdue ? "⚠️" : "📅"} {formatDate(p.deadline)}
-                      </p>}
-                    </div>
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0", s?.color)}>{s?.label}</span>
+        {/* Active Projects */}
+        <ColCard title="Faol Loyihalar" emoji="📐" count={activePr} href="/projects" sub="faol">
+          {projects.filter(p=>p.status!=="COMPLETED").slice(0,5).map(p=>{
+            const s=PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
+            const ov=p.deadline&&new Date(p.deadline)<new Date()
+            return (
+              <Link key={p.id} href={`/projects/${p.id}`}>
+                <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors cursor-pointer group">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#2a1500] dark:text-amber-100 truncate group-hover:text-[#B8860B] transition-colors">{p.name}</p>
+                    {p.deadline&&<p className={cn("text-xs",ov?"text-red-500":"text-[#B8860B]/40")}>{ov?"⚠️ ":"📅 "}{formatDate(p.deadline)}</p>}
                   </div>
-                </Link>
-              )
-            })}
-            {!projects.filter(p => p.status !== "COMPLETED").length && (
-              <p className="text-center text-amber-400/50 py-6 text-sm">Faol loyiha yo'q</p>
-            )}
-          </div>
-        </div>
+                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0",s?.color)}>{s?.label}</span>
+                </div>
+              </Link>
+            )
+          })}
+          {!projects.filter(p=>p.status!=="COMPLETED").length&&<EmptyState emoji="📐" text="Faol loyiha yo'q"/>}
+        </ColCard>
 
         {/* Diary */}
-        <div className="card-gold">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8d8b0]/60 dark:border-[#2a1e08]/60">
-            <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-base">📖</div>
-              <div>
-                <p className="text-sm font-bold text-[#3d2800] dark:text-amber-100">Oxirgi Kundalik</p>
-                <p className="text-xs text-amber-700/50">{diaries.length} ta yozuv</p>
-              </div>
-            </div>
-            <Link href="/diary"><span className="text-xs text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1">Barchasi <ChevronRight className="h-3 w-3"/></span></Link>
-          </div>
-          <div className="p-4 space-y-2">
-            {diaries.map(d => (
+        <ColCard title="Kundalik" emoji="📖" count={diaries.length} href="/diary" sub="oxirgi">
+          {diaries.length===0
+            ? <EmptyState emoji="📖" text="Yozuv yo'q"/>
+            : diaries.map(d=>(
               <Link key={d.id} href={`/diary/${d.id}`}>
-                <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors cursor-pointer group">
-                  <div className="flex-shrink-0 w-11 text-center bg-emerald-100/70 dark:bg-emerald-950/40 rounded-xl py-1.5">
-                    <p className="text-base font-bold text-emerald-700 dark:text-emerald-400 leading-none">{new Date(d.date).getDate()}</p>
-                    <p className="text-[9px] text-emerald-600/70 uppercase font-semibold">
-                      {new Date(d.date).toLocaleString("uz-UZ",{month:"short"})}
-                    </p>
+                <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#B8860B]/[0.04] transition-colors cursor-pointer group">
+                  <div className="w-10 text-center bg-emerald-50 dark:bg-emerald-950/30 rounded-xl py-1.5 flex-shrink-0">
+                    <p className="text-sm font-bold text-emerald-700 leading-none">{new Date(d.date).getDate()}</p>
+                    <p className="text-[9px] text-emerald-500 uppercase">{new Date(d.date).toLocaleString("uz-UZ",{month:"short"})}</p>
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
-                    <p className="text-sm font-medium text-[#3d2800] dark:text-amber-100 truncate group-hover:text-amber-700 transition-colors">{d.title}</p>
-                    {d.description && <p className="text-xs text-amber-600/50 line-clamp-1">{d.description}</p>}
+                    <p className="text-sm font-medium text-[#2a1500] dark:text-amber-100 truncate group-hover:text-[#B8860B] transition-colors">{d.title}</p>
+                    {d.description&&<p className="text-xs text-[#B8860B]/40 line-clamp-1">{d.description}</p>}
                   </div>
                 </div>
               </Link>
             ))}
-            {!diaries.length && <p className="text-center text-amber-400/50 py-6 text-sm">Yozuv yo'q</p>}
-          </div>
-        </div>
+        </ColCard>
       </div>
 
-      {/* ── Project status breakdown ── */}
-      <div className="card-gold">
-        <div className="px-6 py-4 border-b border-[#e8d8b0]/60 dark:border-[#2a1e08]/60">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">📊</span>
-            <div>
-              <p className="text-sm font-bold text-[#3d2800] dark:text-amber-100">Loyihalar Holati</p>
-              <p className="text-xs text-amber-700/50">Barcha loyihalar statistikasi</p>
-            </div>
+      {/* ─── STATUS BREAKDOWN ─── */}
+      <div className="arch-card">
+        <div className="px-6 py-4 border-b border-[#B8860B]/10 flex items-center gap-3">
+          <Hex8 size={28} opacity={0.4}/>
+          <div>
+            <p className="text-sm font-bold text-[#2a1500] dark:text-amber-100">Loyihalar Holati</p>
+            <p className="text-xs text-[#B8860B]/40">Statistika</p>
           </div>
         </div>
         <div className="p-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {Object.entries(PROJECT_STATUSES).map(([key, val]) => {
-              const count = projects.filter(p => p.status === key).length
-              const pct   = projects.length ? Math.round((count / projects.length) * 100) : 0
+            {Object.entries(PROJECT_STATUSES).map(([key,val])=>{
+              const cnt=projects.filter(p=>p.status===key).length
+              const pct=projects.length?Math.round((cnt/projects.length)*100):0
               return (
                 <Link key={key} href={`/projects?status=${key}`}>
-                  <div className="group text-center p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 border border-transparent hover:border-amber-200 dark:hover:border-amber-800/40 transition-all cursor-pointer">
-                    <p className="text-3xl font-bold text-[#3d2800] dark:text-amber-100 group-hover:text-amber-700 transition-colors">{count}</p>
-                    <span className={cn("inline-block text-xs px-2 py-0.5 rounded-full font-semibold mt-1 mb-1", val.color)}>{val.label}</span>
-                    <div className="h-1 bg-amber-200/40 dark:bg-amber-900/30 rounded-full mt-1.5 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-500 to-blue-600 rounded-full transition-all duration-700" style={{ width:`${pct}%` }} />
+                  <div className="group text-center p-4 rounded-2xl bg-[#B8860B]/[0.04] hover:bg-[#B8860B]/[0.08] border border-transparent hover:border-[#B8860B]/20 transition-all cursor-pointer">
+                    <p className="text-3xl font-bold text-[#2a1500] dark:text-amber-100 group-hover:text-[#B8860B] transition-colors">{cnt}</p>
+                    <span className={cn("inline-block text-xs px-2 py-0.5 rounded-full font-semibold mt-1 mb-2",val.color)}>{val.label}</span>
+                    <div className="h-1 bg-[#B8860B]/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#B8860B] to-[#0A2342] rounded-full transition-all duration-700" style={{width:`${pct}%`}}/>
                     </div>
-                    <p className="text-[10px] text-amber-500/60 mt-1">{pct}%</p>
+                    <p className="text-[10px] text-[#B8860B]/30 mt-1">{pct}%</p>
                   </div>
                 </Link>
               )
@@ -299,6 +244,36 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ColCard({ title,emoji,count,href,sub,children }: { title:string;emoji:string;count:number;href:string;sub:string;children:React.ReactNode }) {
+  return (
+    <div className="arch-card">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#B8860B]/10">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-xl bg-[#B8860B]/8 border border-[#B8860B]/15 flex items-center justify-center text-base">{emoji}</div>
+          <div>
+            <p className="text-sm font-bold text-[#2a1500] dark:text-amber-100">{title}</p>
+            <p className="text-xs text-[#B8860B]/40">{count} ta {sub}</p>
+          </div>
+        </div>
+        <Link href={href}>
+          <span className="text-xs text-[#B8860B] hover:text-[#966B08] font-medium flex items-center gap-1">
+            Barchasi <ChevronRight className="h-3 w-3"/>
+          </span>
+        </Link>
+      </div>
+      <div className="p-4 space-y-1">{children}</div>
+    </div>
+  )
+}
+function EmptyState({ emoji,text }: { emoji:string;text:string }) {
+  return (
+    <div className="text-center py-8 text-[#B8860B]/30">
+      <div className="text-3xl mb-2">{emoji}</div>
+      <p className="text-sm font-medium">{text}</p>
     </div>
   )
 }
