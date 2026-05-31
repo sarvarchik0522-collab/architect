@@ -8,8 +8,8 @@ export default async function DashboardPage() {
   const userId  = (session?.user as any)?.id
 
   const today      = new Date()
-  const todayStart = new Date(today); todayStart.setHours(0, 0, 0, 0)
-  const todayEnd   = new Date(today); todayEnd.setHours(23, 59, 59, 999)
+  const todayStart = new Date(today); todayStart.setHours(0,0,0,0)
+  const todayEnd   = new Date(today); todayEnd.setHours(23,59,59,999)
 
   const [projects, clients, tasks, todayTasks, diaries, incomes] = await Promise.all([
     prisma.project.findMany({ where: { userId } }),
