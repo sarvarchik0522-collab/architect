@@ -1,588 +1,444 @@
 /**
- * Export utility — Word (.docx) + PDF
- * Uses: docx + file-saver + browser print API
+ * Export — Word (.docx via HTML) + PDF (print window)
+ * Word: HTML → Blob with mimeType application/msword  ← 100% browser-compatible, no library needed
+ * PDF: Opens a styled iframe/window and triggers print
  */
+import {
+  formatDate, formatCurrency,
+  PROJECT_STATUSES, EXPENSE_CATEGORIES, INCOME_CATEGORIES,
+} from "./utils"
 
-import { formatDate, formatCurrency, PROJECT_STATUSES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "./utils"
+/* ══════════════════════════════════════════════
+   SHARED STYLES (used in both Word HTML + PDF)
+══════════════════════════════════════════════ */
+const SHARED_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-size:11pt;color:#1A1814;background:white;line-height:1.55}
+  h1,h2,h3{font-family:'Playfair Display',Georgia,serif;color:#1A1814;letter-spacing:-0.02em}
+  table{width:100%;border-collapse:collapse;margin:8pt 0;font-size:9.5pt;page-break-inside:auto}
+  thead{display:table-header-group}
+  tr{page-break-inside:avoid;page-break-after:auto}
+  thead th{padding:7pt 10pt;text-align:left;font-size:8pt;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:#8A8070;
+    background:#F5F0E8!important;border-bottom:1.5pt solid #C8A870;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  tbody td{padding:5.5pt 10pt;font-size:9.5pt;color:#2E2A24;border-bottom:.5pt solid rgba(200,168,112,.18)}
+  tfoot td{padding:6pt 10pt;font-weight:700;color:#1A1814;border-top:1pt solid rgba(200,168,112,.35);
+    background:rgba(200,168,112,.06)!important;-webkit-print-color-adjust:exact}
+  .gold-line{border:none;border-top:1pt solid rgba(200,168,112,.45);margin:10pt 0}
+  .title-block{text-align:center;padding:0 0 14pt}
+  .title-block h1{font-size:18pt;color:#1A1814}
+  .title-block .sub{color:#8A8070;font-size:10.5pt;margin-top:4pt}
+  .section-title{font-family:'Playfair Display',serif;font-size:13pt;font-weight:700;
+    color:#1A1814;margin:14pt 0 6pt;padding-bottom:4pt;border-bottom:1pt solid rgba(200,168,112,.35)}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8pt;margin-bottom:8pt}
+  .stat-box{border:1pt solid rgba(200,168,112,.25);background:#F5F0E8;padding:9pt 12pt;border-radius:3pt;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .stat-box .lbl{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8A8070}
+  .stat-box .val{font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#1A1814;margin-top:3pt}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10pt}
+  .party-box{border:1pt solid rgba(200,168,112,.25);background:#F5F0E8;padding:10pt;border-radius:3pt;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .party-box .ptitle{font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8A8070;margin-bottom:7pt}
+  .kv{display:flex;gap:6pt;padding:2.5pt 0;font-size:9.5pt}
+  .kv .k{font-weight:600;color:#8A8070;min-width:95pt;flex-shrink:0}
+  .kv .v{color:#1A1814}
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:28pt;margin-top:28pt}
+  .sig-box .sib-title{font-size:8.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8A8070;margin-bottom:20pt}
+  .sig-line{border-bottom:1.5pt solid #C8A870;margin-bottom:5pt}
+  .sig-name{font-size:9pt;color:#8A8070}
+  .footer-text{text-align:center;font-size:8pt;color:#8A8070;margin-top:20pt;font-style:italic}
+  .badge{display:inline-block;padding:2pt 6pt;background:#F5F0E8;color:#8A8070;
+    border:0.7pt solid rgba(200,168,112,.35);border-radius:2pt;font-size:8pt;font-weight:600}
+  .pre{white-space:pre-wrap;font-family:'Inter',sans-serif;font-size:9.5pt;color:#2E2A24;line-height:1.6}
+`
 
-/* ════════════════════════════════════════════════
-   WORD EXPORT — using docx library
-════════════════════════════════════════════════ */
-
-export async function exportReportToWord(data: any, periodLabel: string) {
-  const { Document, Packer, Paragraph, Table, TableRow, TableCell,
-    TextRun, HeadingLevel, AlignmentType, BorderStyle, WidthType,
-    ShadingType, convertInchesToTwip, Header, Footer, PageNumber } = await import("docx")
-  const { saveAs } = await import("file-saver")
-
-  const GOLD  = "C8A870"
-  const CREAM = "F5F0E8"
-  const INK   = "1A1814"
-  const STONE = "8A8070"
-  const WHITE = "FFFFFF"
-
-  /* Helper: heading */
-  const h1 = (text: string) => new Paragraph({
-    children: [new TextRun({ text, bold: true, size: 28, color: INK, font: "Georgia" })],
-    heading: HeadingLevel.HEADING_1,
-    spacing: { before: 200, after: 160 },
-    border: { bottom: { color: GOLD, size: 8, style: BorderStyle.SINGLE, space: 4 } },
-  })
-
-  const h2 = (text: string) => new Paragraph({
-    children: [new TextRun({ text: `◆  ${text}`, bold: true, size: 22, color: INK })],
-    spacing: { before: 300, after: 100 },
-  })
-
-  const p = (text: string, opts: any = {}) => new Paragraph({
-    children: [new TextRun({ text, size: 20, color: opts.color || INK, ...opts })],
-    spacing: { before: 40, after: 40 },
-  })
-
-  const divider = () => new Paragraph({
-    border: { bottom: { color: GOLD, size: 4, style: BorderStyle.SINGLE, space: 2 } },
-    spacing: { before: 120, after: 120 },
-  })
-
-  /* Helper: table */
-  const makeTable = (headers: string[], rows: string[][]) => new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [
-      new TableRow({
-        tableHeader: true,
-        children: headers.map(h => new TableCell({
-          children: [new Paragraph({
-            children: [new TextRun({ text: h.toUpperCase(), bold: true, size: 16, color: STONE })],
-            alignment: AlignmentType.LEFT,
-          })],
-          shading: { fill: CREAM, type: ShadingType.CLEAR },
-          margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        })),
-      }),
-      ...rows.map(row => new TableRow({
-        children: row.map(cell => new TableCell({
-          children: [new Paragraph({
-            children: [new TextRun({ text: String(cell), size: 18, color: INK })],
-          })],
-          margins: { top: 60, bottom: 60, left: 120, right: 120 },
-        })),
-      })),
-    ],
-  })
-
-  /* ── Build document ── */
-  const children: any[] = []
-
-  /* Title */
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "🏛  ARXITEKTOR KUNDALIGI", bold: true, size: 36, color: GOLD })],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 0, after: 80 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: "HISOBOT", bold: true, size: 28, color: INK })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: periodLabel, size: 22, color: STONE })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [new TextRun({
-        text: new Date().toLocaleDateString("uz-UZ", { year: "numeric", month: "long", day: "numeric" }),
-        size: 18, color: STONE,
-      })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 },
-    }),
-    divider(),
-  )
-
-  /* Finance summary */
-  children.push(h2("MOLIYA XULOSASI"))
+/* ══════════════════════════════════════════════
+   REPORT — HTML string builder
+══════════════════════════════════════════════ */
+function buildReportHTML(data: any, periodLabel: string): string {
+  const now = new Date().toLocaleDateString("uz-UZ", { year:"numeric", month:"long", day:"numeric" })
   const fin = data.finance
-  children.push(makeTable(
-    ["Ko'rsatkich", "Summa"],
-    [
-      ["Jami Daromad",  formatCurrency(fin.totalIncome)],
-      ["Jami Xarajat",  formatCurrency(fin.totalExpense)],
-      ["Sof Foyda",     formatCurrency(fin.profit)],
-    ]
-  ), divider())
 
-  /* Income table */
+  const clientIncomeMap: Record<string,number> = {}
+  data.incomes?.forEach((inc: any) => {
+    if (inc.clientId) clientIncomeMap[inc.clientId] = (clientIncomeMap[inc.clientId]??0) + inc.amount
+  })
+
+  const tableHdr = (cols: string[]) =>
+    `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>`
+  const tableRows = (rows: string[][]) =>
+    `<tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`
+  const tfoot = (label: string, val: string, cols: number) =>
+    `<tfoot><tr><td colspan="${cols-1}"><strong>${label}</strong></td><td><strong>${val}</strong></td></tr></tfoot>`
+
+  let html = `
+  <div class="title-block">
+    <h1>ARXITEKTOR KUNDALIGI — HISOBOT</h1>
+    <p class="sub">${periodLabel}</p>
+    <p class="sub" style="font-size:8.5pt;margin-top:3pt">${now}</p>
+  </div>
+  <hr class="gold-line">
+
+  <h2 class="section-title">💰 Moliya Xulosasi</h2>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="lbl">Jami Daromad</div>
+      <div class="val">+${formatCurrency(fin.totalIncome)}</div>
+    </div>
+    <div class="stat-box">
+      <div class="lbl">Jami Xarajat</div>
+      <div class="val">-${formatCurrency(fin.totalExpense)}</div>
+    </div>
+    <div class="stat-box">
+      <div class="lbl">Sof Foyda</div>
+      <div class="val">${fin.profit>=0?"+":""}${formatCurrency(fin.profit)}</div>
+    </div>
+  </div>`
+
   if (data.incomes?.length) {
-    children.push(h2(`DAROMADLAR (${data.incomes.length} ta)`))
-    children.push(makeTable(
-      ["#", "Sana", "Tavsif", "Loyiha", "Mijoz", "Summa"],
-      data.incomes.map((inc: any, i: number) => [
-        String(i + 1),
-        formatDate(inc.date),
-        inc.description || (INCOME_CATEGORIES[inc.category as keyof typeof INCOME_CATEGORIES] ?? "—"),
-        inc.project?.name ?? "—",
-        inc.client?.name ?? "—",
-        "+" + formatCurrency(inc.amount),
-      ])
-    ), divider())
+    html += `
+  <h2 class="section-title">📈 Daromadlar Jadvali (${data.incomes.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Sana","Tavsif","Loyiha","Mijoz","Summa"])}
+    ${tableRows(data.incomes.map((inc:any,i:number)=>[
+      String(i+1), formatDate(inc.date),
+      inc.description||(INCOME_CATEGORIES[inc.category as keyof typeof INCOME_CATEGORIES]??"—"),
+      inc.project?.name??"—", inc.client?.name??"—",
+      "+"+formatCurrency(inc.amount),
+    ]))}
+    ${tfoot("Jami Daromad", "+"+formatCurrency(data.incomes.reduce((s:number,i:any)=>s+i.amount,0)), 6)}
+  </table>`
   }
 
-  /* Expense table */
   if (data.expenses?.length) {
-    children.push(h2(`XARAJATLAR (${data.expenses.length} ta)`))
-    children.push(makeTable(
-      ["#", "Sana", "Tavsif", "Kategoriya", "Summa"],
-      data.expenses.map((exp: any, i: number) => [
-        String(i + 1),
-        formatDate(exp.date),
-        exp.description || "—",
-        EXPENSE_CATEGORIES[exp.category as keyof typeof EXPENSE_CATEGORIES] ?? exp.category ?? "—",
-        "-" + formatCurrency(exp.amount),
-      ])
-    ), divider())
+    html += `
+  <h2 class="section-title">📉 Xarajatlar Jadvali (${data.expenses.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Sana","Tavsif","Kategoriya","Summa"])}
+    ${tableRows(data.expenses.map((exp:any,i:number)=>[
+      String(i+1), formatDate(exp.date),
+      exp.description??"—",
+      EXPENSE_CATEGORIES[exp.category as keyof typeof EXPENSE_CATEGORIES]??exp.category??"—",
+      "-"+formatCurrency(exp.amount),
+    ]))}
+    ${tfoot("Jami Xarajat", "-"+formatCurrency(data.expenses.reduce((s:number,e:any)=>s+e.amount,0)), 5)}
+  </table>`
   }
 
-  /* Client activity */
   if (data.clients?.activeList?.length) {
-    const clientIncomeMap: Record<string, number> = {}
-    data.incomes?.forEach((inc: any) => {
-      if (inc.clientId) clientIncomeMap[inc.clientId] = (clientIncomeMap[inc.clientId] ?? 0) + inc.amount
-    })
-    children.push(h2(`MIJOZLAR FAOLIYATI (${data.clients.activeList.length} ta)`))
-    children.push(makeTable(
-      ["#", "Mijoz ismi", "Telefon", "Manzil", "Kelishilgan summa", "Olingan summa", "Qolgan summa"],
-      data.clients.activeList.map((c: any, i: number) => [
-        String(i + 1),
-        c.name,
-        c.phone ?? "—",
-        c.address ?? "—",
-        "—",
-        "+" + formatCurrency(clientIncomeMap[c.id] ?? 0),
-        "—",
-      ])
-    ), divider())
+    html += `
+  <h2 class="section-title">👥 Mijozlar Faoliyati (${data.clients.activeList.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Mijoz ismi","Telefon","Manzil","Kelishilgan","Olingan","Qolgan"])}
+    ${tableRows(data.clients.activeList.map((c:any,i:number)=>[
+      String(i+1), c.name, c.phone??"—", c.address??"—",
+      "—", "+"+formatCurrency(clientIncomeMap[c.id]??0), "—",
+    ]))}
+    ${tfoot("Jami olingan", "+"+formatCurrency(Object.values(clientIncomeMap).reduce((s,v)=>(s as number)+(v as number),0)), 7)}
+  </table>`
   }
 
-  /* Projects */
   if (data.projects?.list?.length) {
-    children.push(h2(`LOYIHALAR (${data.projects.list.length} ta)`))
-    children.push(makeTable(
-      ["#", "Loyiha nomi", "Mijoz", "Holat", "Byudjet"],
-      data.projects.list.map((pr: any, i: number) => [
-        String(i + 1),
-        pr.name,
-        pr.client?.name ?? "—",
-        PROJECT_STATUSES[pr.status as keyof typeof PROJECT_STATUSES]?.label ?? pr.status,
-        pr.budget ? formatCurrency(pr.budget) : "—",
-      ])
-    ), divider())
+    html += `
+  <h2 class="section-title">📐 Loyihalar (${data.projects.list.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Loyiha nomi","Mijoz","Holat","Byudjet"])}
+    ${tableRows(data.projects.list.map((p:any,i:number)=>[
+      String(i+1), p.name, p.client?.name??"—",
+      PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]?.label??p.status,
+      p.budget?formatCurrency(p.budget):"—",
+    ]))}
+  </table>`
   }
 
-  /* Tasks */
-  children.push(h2("VAZIFALAR XULOSASI"))
-  children.push(makeTable(
-    ["Ko'rsatkich", "Soni"],
-    [
-      ["Jami vazifalar",    String(data.tasks.total)],
-      ["Bajarilmagan",     String(data.tasks.todo)],
-      ["Jarayonda",        String(data.tasks.inProgress)],
-      ["Bajarildi",        String(data.tasks.done)],
-    ]
-  ))
+  html += `
+  <h2 class="section-title">✅ Vazifalar Xulosasi</h2>
+  <table>
+    ${tableHdr(["Ko'rsatkich","Soni"])}
+    <tbody>
+      <tr><td>Jami vazifalar</td><td>${data.tasks.total}</td></tr>
+      <tr><td>Bajarilmagan</td><td>${data.tasks.todo}</td></tr>
+      <tr><td>Jarayonda</td><td>${data.tasks.inProgress}</td></tr>
+      <tr><td>Bajarildi</td><td>${data.tasks.done}</td></tr>
+    </tbody>
+  </table>
 
-  /* Footer */
-  children.push(
-    new Paragraph({ text: "", spacing: { before: 400 } }),
-    new Paragraph({
-      children: [new TextRun({
-        text: `Arxitektor Kundaligi  ·  ${new Date().toLocaleDateString("uz-UZ")}`,
-        size: 16, color: STONE, italics: true,
-      })],
-      alignment: AlignmentType.CENTER,
-    }),
-  )
+  <p class="footer-text">Arxitektor Kundaligi · ${now} · Hisobot</p>`
 
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children,
-    }],
-    styles: {
-      default: {
-        document: {
-          run: { font: "Calibri", size: 20, color: INK },
-        },
-      },
-    },
-  })
-
-  const blob = await Packer.toBlob(doc)
-  saveAs(blob, `hisobot-${periodLabel.replace(/\s+/g, "-")}.docx`)
+  return html
 }
 
-/* ════════════════════════════════════════════════
-   CONTRACT → WORD
-════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   CONTRACT — HTML string builder
+══════════════════════════════════════════════ */
+function buildContractHTML(c: any): string {
+  const kv = (k: string, v: string) =>
+    `<div class="kv"><span class="k">${k}</span><span class="v">${v||"—"}</span></div>`
 
-export async function exportContractToWord(contract: any) {
-  const { Document, Packer, Paragraph, Table, TableRow, TableCell,
-    TextRun, HeadingLevel, AlignmentType, BorderStyle, WidthType,
-    ShadingType, convertMillimetersToTwip } = await import("docx")
-  const { saveAs } = await import("file-saver")
+  return `
+  <div class="title-block">
+    <h1>ARXITEKTURA XIZMATLARI SHARTNOMASI</h1>
+    <p class="sub">Shartnoma № ${c.contractNumber}</p>
+    <p class="sub" style="font-size:8.5pt;margin-top:3pt">Tuzilgan sana: ${formatDate(c.createdAt)}</p>
+  </div>
+  <hr class="gold-line">
 
-  const GOLD  = "C8A870"
-  const CREAM = "F5F0E8"
-  const INK   = "1A1814"
-  const STONE = "8A8070"
+  <div class="two-col" style="margin-bottom:10pt">
+    <div class="party-box">
+      <div class="ptitle">1 — Buyurtmachi</div>
+      ${kv("Ism-sharif",  c.clientName)}
+      ${c.clientPassport ? kv("Pasport",    c.clientPassport) : ""}
+      ${c.clientPhone    ? kv("Telefon",    c.clientPhone)    : ""}
+      ${c.clientAddress  ? kv("Manzil",     c.clientAddress)  : ""}
+    </div>
+    <div class="party-box">
+      <div class="ptitle">2 — Ijrochi (Arxitektor)</div>
+      ${kv("Ism-sharif",  c.architectName)}
+      ${c.architectPhone   ? kv("Telefon", c.architectPhone)   : ""}
+      ${c.architectAddress ? kv("Manzil",  c.architectAddress) : ""}
+    </div>
+  </div>
 
-  const p = (text: string, opts: any = {}) => new Paragraph({
-    children: [new TextRun({ text, size: opts.size || 20, color: opts.color || INK,
-      bold: opts.bold, italics: opts.italics })],
-    alignment: opts.align || AlignmentType.LEFT,
-    spacing: { before: opts.before || 60, after: opts.after || 60 },
-    ...(opts.border ? { border: { bottom: { color: GOLD, size: 4, style: BorderStyle.SINGLE, space: 2 } } } : {}),
-  })
+  <h2 class="section-title">📐 Loyiha Ma'lumotlari</h2>
+  ${kv("Loyiha nomi",   c.projectName)}
+  ${c.projectType    ? kv("Turi",       c.projectType)                         : ""}
+  ${c.projectAddress ? kv("Manzil",     c.projectAddress)                      : ""}
+  ${c.startDate      ? kv("Boshlanish", formatDate(c.startDate))               : ""}
+  ${c.endDate        ? kv("Tugash",     formatDate(c.endDate))                 : ""}
 
-  const divider = () => new Paragraph({
-    border: { bottom: { color: GOLD, size: 4, style: BorderStyle.SINGLE, space: 2 } },
-    spacing: { before: 160, after: 160 },
-  })
+  <h2 class="section-title">📋 Bajarilishi Kerak Bo'lgan Ishlar</h2>
+  <div class="pre">${(c.workItems||"").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
 
-  const kv = (key: string, val: string) => new Paragraph({
-    children: [
-      new TextRun({ text: key + ":  ", bold: true, size: 18, color: STONE }),
-      new TextRun({ text: val, size: 19, color: INK }),
-    ],
-    spacing: { before: 50, after: 50 },
-  })
+  <h2 class="section-title">💳 To'lov Shartlari</h2>
+  ${kv("Jami summa",    formatCurrency(c.totalAmount))}
+  ${c.advanceAmount>0 ? kv("Avans to'lov", formatCurrency(c.advanceAmount)) : ""}
+  ${c.advanceAmount>0 ? kv("Qoldiq",        formatCurrency(c.totalAmount-c.advanceAmount)) : ""}
 
-  const party = (num: string, title: string, fields: [string, string][]) => new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [
-      new TableRow({ children: [new TableCell({
-        columnSpan: 2,
-        children: [new Paragraph({
-          children: [new TextRun({ text: `${num}. ${title.toUpperCase()}`, bold: true, size: 20, color: STONE })],
-        })],
-        shading: { fill: CREAM, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 140, right: 140 },
-      })]}),
-      ...fields.map(([k, v]) => new TableRow({ children: [
-        new TableCell({
-          width: { size: 35, type: WidthType.PERCENTAGE },
-          children: [new Paragraph({
-            children: [new TextRun({ text: k, bold: true, size: 18, color: STONE })],
-          })],
-          margins: { top: 60, bottom: 60, left: 140, right: 80 },
-        }),
-        new TableCell({
-          width: { size: 65, type: WidthType.PERCENTAGE },
-          children: [new Paragraph({
-            children: [new TextRun({ text: v, size: 19, color: INK })],
-          })],
-          margins: { top: 60, bottom: 60, left: 80, right: 140 },
-        }),
-      ]})),
-    ],
-  })
+  ${c.terms ? `
+  <h2 class="section-title">📄 Shartnoma Shartlari</h2>
+  <div class="pre">${(c.terms||"").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div>
+  ` : ""}
 
-  const children: any[] = [
-    /* Title block */
-    new Paragraph({
-      children: [new TextRun({ text: "ARXITEKTURA XIZMATLARI SHARTNOMASI", bold: true, size: 32, color: GOLD })],
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 0, after: 80 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `Shartnoma № ${contract.contractNumber}`, size: 22, color: INK, bold: true })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `Tuzilgan sana: ${formatDate(contract.createdAt)}`, size: 18, color: STONE })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 },
-    }),
-    divider(),
+  <h2 class="section-title">✍️ Imzolar</h2>
+  <div class="sig-grid">
+    <div class="sig-box">
+      <div class="sib-title">Buyurtmachi</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${c.clientName}</div>
+      <div class="sig-name" style="margin-top:4pt">Imzo / Sana: __________</div>
+    </div>
+    <div class="sig-box">
+      <div class="sib-title">Ijrochi (Arxitektor)</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${c.architectName}</div>
+      <div class="sig-name" style="margin-top:4pt">Imzo / Sana: __________</div>
+    </div>
+  </div>
 
-    /* Parties */
-    p("1-QISM: TOMONLAR MA'LUMOTLARI", { bold: true, size: 24, border: true }),
-    new Paragraph({ text: "", spacing: { before: 160, after: 0 } }),
+  <div style="display:flex;justify-content:center;margin-top:18pt">
+    <div style="width:70pt;height:70pt;border-radius:50%;border:2pt dashed rgba(200,168,112,.35);
+      display:flex;align-items:center;justify-content:center;text-align:center">
+      <span style="font-size:8pt;color:rgba(200,168,112,.5);line-height:1.4">Muhr<br>joyi</span>
+    </div>
+  </div>
 
-    party("1", "Buyurtmachi", [
-      ["Ism-sharif",  contract.clientName    || "—"],
-      ["Pasport",     contract.clientPassport || "—"],
-      ["Telefon",     contract.clientPhone   || "—"],
-      ["Manzil",      contract.clientAddress || "—"],
-    ]),
-    new Paragraph({ text: "", spacing: { before: 160, after: 0 } }),
-
-    party("2", "Ijrochi (Arxitektor)", [
-      ["Ism-sharif",  contract.architectName    || "—"],
-      ["Telefon",     contract.architectPhone   || "—"],
-      ["Manzil",      contract.architectAddress || "—"],
-    ]),
-    divider(),
-
-    /* Project */
-    p("2-QISM: LOYIHA MA'LUMOTLARI", { bold: true, size: 24, border: true }),
-    new Paragraph({ text: "", spacing: { before: 80, after: 0 } }),
-    kv("Loyiha nomi",   contract.projectName    || "—"),
-    kv("Loyiha turi",   contract.projectType    || "—"),
-    kv("Manzil",        contract.projectAddress || "—"),
-    kv("Boshlanish",    contract.startDate ? formatDate(contract.startDate) : "—"),
-    kv("Tugash sanasi", contract.endDate   ? formatDate(contract.endDate)   : "—"),
-    divider(),
-
-    /* Work items */
-    p("3-QISM: BAJARILISHI KERAK BO'LGAN ISHLAR", { bold: true, size: 24, border: true }),
-    new Paragraph({ text: "", spacing: { before: 100, after: 0 } }),
-    new Paragraph({
-      children: [new TextRun({ text: contract.workItems || "—", size: 19, color: INK })],
-      spacing: { before: 60, after: 60 },
-    }),
-    divider(),
-
-    /* Payment */
-    p("4-QISM: TO'LOV SHARTLARI", { bold: true, size: 24, border: true }),
-    new Paragraph({ text: "", spacing: { before: 80, after: 0 } }),
-    kv("Jami summa",  formatCurrency(contract.totalAmount)),
-  ]
-
-  if (contract.advanceAmount > 0) {
-    children.push(
-      kv("Avans to'lov", formatCurrency(contract.advanceAmount)),
-      kv("Qoldiq",       formatCurrency(contract.totalAmount - contract.advanceAmount)),
-    )
-  }
-  children.push(divider())
-
-  /* Terms */
-  if (contract.terms) {
-    children.push(
-      p("5-QISM: SHARTNOMA SHARTLARI", { bold: true, size: 24, border: true }),
-      new Paragraph({ text: "", spacing: { before: 80, after: 0 } }),
-      new Paragraph({
-        children: [new TextRun({ text: contract.terms, size: 19, color: INK })],
-        spacing: { before: 60, after: 200 },
-      }),
-      divider(),
-    )
-  }
-
-  /* Signatures */
-  children.push(
-    p("6-QISM: IMZOLAR", { bold: true, size: 24, border: true }),
-    new Paragraph({ text: "", spacing: { before: 200, after: 0 } }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({ children: [
-          new TableCell({
-            width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [
-              p("Buyurtmachi:", { bold: true }),
-              new Paragraph({ text: "", spacing: { before: 20, after: 20 } }),
-              new Paragraph({
-                border: { bottom: { color: GOLD, size: 6, style: BorderStyle.SINGLE, space: 1 } },
-                spacing: { before: 100, after: 60 },
-                children: [],
-              }),
-              p(contract.clientName, { size: 18, color: STONE }),
-              p("Imzo / Sana: _______________", { size: 16, color: STONE }),
-            ],
-            margins: { top: 60, bottom: 60, left: 0, right: 200 },
-            borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
-          }),
-          new TableCell({
-            width: { size: 50, type: WidthType.PERCENTAGE },
-            children: [
-              p("Ijrochi (Arxitektor):", { bold: true }),
-              new Paragraph({ text: "", spacing: { before: 20, after: 20 } }),
-              new Paragraph({
-                border: { bottom: { color: GOLD, size: 6, style: BorderStyle.SINGLE, space: 1 } },
-                spacing: { before: 100, after: 60 },
-                children: [],
-              }),
-              p(contract.architectName, { size: 18, color: STONE }),
-              p("Imzo / Sana: _______________", { size: 16, color: STONE }),
-            ],
-            margins: { top: 60, bottom: 60, left: 200, right: 0 },
-            borders: { top: {style: BorderStyle.NONE}, bottom: {style: BorderStyle.NONE}, left: {style: BorderStyle.NONE}, right: {style: BorderStyle.NONE} },
-          }),
-        ]}),
-      ],
-    }),
-    new Paragraph({ text: "", spacing: { before: 400, after: 0 } }),
-    new Paragraph({
-      children: [new TextRun({
-        text: `Arxitektor Kundaligi  ·  Shartnoma #${contract.contractNumber}  ·  ${formatDate(contract.createdAt)}`,
-        size: 16, color: STONE, italics: true,
-      })],
-      alignment: AlignmentType.CENTER,
-    }),
-  )
-
-  const doc = new Document({
-    sections: [{ properties: {}, children }],
-    styles: {
-      default: {
-        document: { run: { font: "Calibri", size: 20, color: INK } },
-      },
-    },
-  })
-
-  const blob = await Packer.toBlob(doc)
-  saveAs(blob, `shartnoma-${contract.contractNumber}.docx`)
+  <p class="footer-text">Arxitektor Kundaligi · Shartnoma #${c.contractNumber} · ${formatDate(c.createdAt)}</p>`
 }
 
-/* ════════════════════════════════════════════════
-   PDF — proper print-based approach
-   Creates a hidden iframe with full styles and prints it
-════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   WORD EXPORT (.docx) via HTML Blob
+   mimeType: application/vnd.ms-word  → opens in Word, saves as .doc
+   For true .docx without library, we use the HTML → Word blob trick
+══════════════════════════════════════════════ */
+function downloadWordBlob(htmlBody: string, filename: string) {
+  const fullHtml = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office'
+      xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name=ProgId content=Word.Document>
+  <meta name=Generator content='Microsoft Word 15'>
+  <meta name=Originator content='Microsoft Word 15'>
+  <style>
+    ${SHARED_CSS}
+    /* Word-specific */
+    @page Section1 {
+      size: 21cm 29.7cm;
+      margin: 2.5cm 2.2cm 2.5cm 2.2cm;
+    }
+    div.Section1 { page: Section1; }
+    body { margin: 0; }
+    table { border-collapse: collapse; }
+    p { margin: 0 0 4pt; }
+  </style>
+</head>
+<body>
+  <div class="Section1">
+    ${htmlBody}
+  </div>
+</body>
+</html>`
 
-export function printAsPDF(elementId: string, filename: string) {
-  const el = document.getElementById(elementId)
-  if (!el) return
+  const blob = new Blob(["\ufeff", fullHtml], {
+    type: "application/vnd.ms-word;charset=utf-8",
+  })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement("a")
+  a.href     = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
-  const html = el.innerHTML
+/* ══════════════════════════════════════════════
+   PUBLIC API
+══════════════════════════════════════════════ */
 
-  const printWindow = window.open("", "_blank", "width=900,height=700")
-  if (!printWindow) { window.print(); return }
+/** Export report as Word (.doc) */
+export function exportReportToWord(data: any, periodLabel: string) {
+  const html = buildReportHTML(data, periodLabel)
+  downloadWordBlob(html, `hisobot-${periodLabel.replace(/[\s/]/g, "-")}.doc`)
+}
 
-  printWindow.document.write(`<!DOCTYPE html>
+/** Export contract as Word (.doc) */
+export function exportContractToWord(contract: any) {
+  const html = buildContractHTML(contract)
+  downloadWordBlob(html, `shartnoma-${contract.contractNumber}.doc`)
+}
+
+/** Print as PDF — opens a clean print window with full CSS */
+export function printAsPDF(elementId: string, _filename: string) {
+  const contentEl = document.getElementById(elementId)
+  if (!contentEl) { window.print(); return }
+
+  /* We always build from data to keep PDF clean and single-page optimised */
+  const html = contentEl.innerHTML
+
+  const printWin = window.open("", "_blank", "width=850,height=1100,scrollbars=yes")
+  if (!printWin) { window.print(); return }
+
+  printWin.document.write(`<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8"/>
-  <title>${filename}</title>
+  <title>Print</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+    ${SHARED_CSS}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── PDF-specific: single A4, tight margins ── */
+    html, body {
+      width: 210mm;
+      background: white !important;
+    }
     body {
-      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-      font-size: 12pt;
-      color: #1A1814;
-      background: white;
-      padding: 18mm 20mm;
-      line-height: 1.5;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    h1, h2, h3 {
-      font-family: 'Playfair Display', Georgia, serif;
-      color: #1A1814;
-      letter-spacing: -0.02em;
-    }
-
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10pt; }
-    thead tr { background: #F5F0E8 !important; -webkit-print-color-adjust: exact; }
-    thead th {
-      padding: 7pt 10pt; text-align: left;
-      font-size: 8pt; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: #8A8070;
-      border-bottom: 1.5pt solid #C8A870;
-    }
-    tbody tr { border-bottom: 0.5pt solid rgba(200,168,112,0.15); }
-    tbody tr:hover { background: #faf8f4; }
-    tbody td { padding: 6pt 10pt; font-size: 10pt; color: #2E2A24; }
-
-    /* Cards */
-    .card-premium, .arch-card {
-      background: white; border: 1pt solid rgba(200,168,112,0.25);
-      border-radius: 4pt; padding: 14pt; margin-bottom: 12pt;
-    }
-
-    /* Section titles */
-    .section-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 14pt; font-weight: 700;
-      color: #1A1814; margin: 14pt 0 8pt;
-      border-bottom: 1pt solid rgba(200,168,112,0.3);
-      padding-bottom: 4pt;
-    }
-
-    /* Contract-specific */
-    .contract-header { text-align: center; padding: 16pt; }
-    .contract-header h1 { font-size: 18pt; color: #1A1814; }
-    .contract-header .sub { color: #8A8070; font-size: 11pt; }
-
-    .party-box {
-      border: 1pt solid rgba(200,168,112,0.25);
-      background: #F5F0E8;
-      padding: 10pt; border-radius: 3pt;
-    }
-    .party-title { font-weight: 700; font-size: 9pt; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #8A8070; margin-bottom: 6pt; }
-    .kv-row { display: flex; gap: 8pt; padding: 3pt 0; font-size: 10pt; }
-    .kv-key { font-weight: 600; color: #8A8070; min-width: 110pt; }
-    .kv-val { color: #1A1814; }
-
-    .sig-row { display: flex; gap: 24pt; margin-top: 24pt; }
-    .sig-box { flex: 1; }
-    .sig-line { border-bottom: 1.5pt solid #C8A870; margin: 28pt 0 4pt; }
-
-    /* Totals */
-    .total-row td { font-weight: 700 !important; color: #1A1814 !important;
-      border-top: 1pt solid rgba(200,168,112,0.35); background: rgba(200,168,112,0.05); }
-
-    .gold-line {
-      border: none; border-top: 1pt solid #C8A870;
-      margin: 10pt 0; opacity: 0.5;
-    }
-
-    .text-gold { color: #C8A870; }
-    .text-stone { color: #8A8070; }
-    .text-ink { color: #1A1814; }
-    .font-serif { font-family: 'Playfair Display', serif; }
-    .text-center { text-align: center; }
-    .font-bold { font-weight: 700; }
-    .text-sm { font-size: 9pt; }
-    .text-xs { font-size: 8pt; }
-
-    /* Frieze */
-    .frieze-band {
-      background: rgba(200,168,112,0.06);
-      border-top: 1pt solid rgba(200,168,112,0.2);
-      border-bottom: 1pt solid rgba(200,168,112,0.2);
-      padding: 4pt 0;
-      font-size: 7pt; letter-spacing: 0.2em;
-      text-transform: uppercase; color: #8A8070;
-      text-align: center;
-    }
-
-    /* Status badges */
-    [class*="bg-[var"] {
-      background: #F5F0E8 !important;
-      color: #8A8070 !important;
-      border: 1pt solid rgba(200,168,112,0.3) !important;
+      padding: 14mm 16mm 14mm 16mm;
+      font-size: 10pt;
     }
 
     @page {
-      margin: 15mm 18mm;
-      size: A4;
+      size: A4 portrait;
+      margin: 12mm 14mm 14mm 14mm;
     }
+
+    /* Force single page for short contracts */
+    .title-block { margin-bottom: 10pt; }
+    .section-title { margin: 10pt 0 4pt; font-size: 11pt; }
+    .two-col { gap: 8pt; }
+    .party-box { padding: 7pt 9pt; }
+    .sig-grid  { margin-top: 18pt; }
+    table { font-size: 8.5pt; }
+    thead th { padding: 5pt 8pt; font-size: 7pt; }
+    tbody td  { padding: 4pt 8pt; }
+
+    /* Reduce spacing for single page */
+    .gold-line { margin: 7pt 0; }
+    .kv        { padding: 2pt 0; font-size: 9pt; }
+    .pre       { font-size: 8.5pt; line-height: 1.45; }
+    .stat-grid { gap: 6pt; }
+    .stat-box  { padding: 7pt 9pt; }
+    .stat-box .val { font-size: 12pt; }
+
+    /* No extra whitespace at bottom */
+    .footer-text { margin-top: 12pt; }
+
+    /* Don't show browser UI in print */
     @media print {
       .no-print { display: none !important; }
-      body { padding: 0; }
+      html, body { width: 100% !important; padding: 0 !important; }
     }
   </style>
 </head>
 <body>
   ${html}
   <script>
-    setTimeout(function() {
-      window.focus();
-      window.print();
-      setTimeout(function() { window.close(); }, 800);
-    }, 600);
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+      }, 400);
+    };
   </script>
 </body>
 </html>`)
+  printWin.document.close()
+}
 
-  printWindow.document.close()
+/** Build & print report PDF (uses internal HTML builder for clean output) */
+export function printReportPDF(data: any, periodLabel: string) {
+  const html = buildReportHTML(data, periodLabel)
+  const printWin = window.open("", "_blank", "width=850,height=1100")
+  if (!printWin) return
+  printWin.document.write(`<!DOCTYPE html><html lang="uz"><head><meta charset="UTF-8"/><title>Hisobot</title>
+<style>
+  ${SHARED_CSS}
+  html,body{background:white!important}
+  body{padding:14mm 16mm;font-size:10pt}
+  @page{size:A4 portrait;margin:12mm 14mm}
+  .section-title{margin:10pt 0 4pt;font-size:11.5pt}
+  table{font-size:8.5pt}
+  thead th{padding:5pt 8pt;font-size:7pt}
+  tbody td{padding:4pt 8pt}
+  .stat-box .val{font-size:13pt}
+  @media print{html,body{padding:0!important}}
+</style></head><body>
+  ${html}
+  <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},400)}</script>
+</body></html>`)
+  printWin.document.close()
+}
+
+/** Build & print contract PDF (uses internal HTML builder for clean single-page output) */
+export function printContractPDF(contract: any) {
+  const html = buildContractHTML(contract)
+  const printWin = window.open("", "_blank", "width=850,height=1100")
+  if (!printWin) return
+  printWin.document.write(`<!DOCTYPE html><html lang="uz"><head><meta charset="UTF-8"/><title>Shartnoma</title>
+<style>
+  ${SHARED_CSS}
+  html,body{background:white!important}
+  body{padding:12mm 15mm;font-size:10pt}
+  @page{size:A4 portrait;margin:10mm 13mm}
+  .title-block{margin-bottom:8pt}
+  .section-title{margin:8pt 0 4pt;font-size:11pt}
+  .two-col{gap:7pt}
+  .party-box{padding:7pt 9pt}
+  .kv{padding:1.5pt 0;font-size:9pt}
+  .pre{font-size:8.5pt;line-height:1.4}
+  .sig-grid{margin-top:14pt}
+  .gold-line{margin:6pt 0}
+  table{font-size:8.5pt}
+  thead th{padding:5pt 8pt;font-size:7pt}
+  tbody td{padding:4pt 8pt}
+  .footer-text{margin-top:10pt;font-size:7.5pt}
+  @media print{html,body{padding:0!important}}
+</style></head><body>
+  ${html}
+  <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},400)}</script>
+</body></html>`)
+  printWin.document.close()
 }
