@@ -1,6 +1,7 @@
 "use client"
 import { useState, useCallback, useEffect } from "react"
-import { BarChart3, TrendingUp, TrendingDown, DollarSign, RefreshCw, Printer } from "lucide-react"
+import { BarChart3, TrendingUp, TrendingDown, DollarSign, RefreshCw, Printer, FileDown } from "lucide-react"
+import { exportReportToWord, printAsPDF } from "@/lib/export"
 import { cn, formatCurrency, formatDate, PROJECT_STATUSES, TASK_STATUSES, TASK_PRIORITIES, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
@@ -161,10 +162,16 @@ export default function ReportsPage() {
             </div>
           </div>
           {data && (
-            <button onClick={() => window.print()}
-              className="btn-ink h-9 px-4 text-sm flex items-center gap-2 no-print">
-              <Printer className="h-4 w-4" /> PDF yuklab olish
-            </button>
+            <div className="flex gap-2 no-print">
+              <button onClick={() => exportReportToWord(data, periodLabel)}
+                className="btn-outline h-9 px-4 text-sm flex items-center gap-2">
+                <FileDown className="h-4 w-4" /> Word (.docx)
+              </button>
+              <button onClick={() => printAsPDF("report-content", `hisobot-${periodLabel}`)}
+                className="btn-ink h-9 px-4 text-sm flex items-center gap-2">
+                <Printer className="h-4 w-4" /> PDF (To'liq)
+              </button>
+            </div>
           )}
         </div>
 
@@ -212,7 +219,7 @@ export default function ReportsPage() {
 
       {/* ─── Report content ─── */}
       {data && (
-        <div className="space-y-6">
+        <div className="space-y-6" id="report-content">
 
           {/* Print header */}
           <div className="hidden print:block text-center mb-6"

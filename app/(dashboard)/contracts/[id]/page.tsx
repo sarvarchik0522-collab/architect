@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Printer, Trash2 } from "lucide-react"
+import { ArrowLeft, Printer, Trash2, FileDown } from "lucide-react"
+import { exportContractToWord, printAsPDF } from "@/lib/export"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { cn, formatDate, formatCurrency } from "@/lib/utils"
@@ -105,9 +106,13 @@ export default function ContractDetailPage() {
                 ))}
               </SelectContent>
             </Select>
-            <button onClick={()=>window.print()}
+            <button onClick={() => exportContractToWord(contract)}
+              className="btn-outline h-9 px-3 text-sm flex items-center gap-1.5">
+              <FileDown className="h-4 w-4"/> Word (.docx)
+            </button>
+            <button onClick={() => printAsPDF("contract-print", `shartnoma-${contract.contractNumber}`)}
               className="btn-ink h-9 px-4 text-sm flex items-center gap-2">
-              <Printer className="h-4 w-4"/> PDF yuklab olish
+              <Printer className="h-4 w-4"/> PDF (To'liq)
             </button>
             <button onClick={del}
               className="h-9 w-9 rounded flex items-center justify-center transition-colors"
