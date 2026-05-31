@@ -29,22 +29,6 @@ interface Client { id: string; name: string }
 
 const EMPTY = { name:"", clientId:"none", phone:"", email:"", address:"", startDate:"", deadline:"", status:"NEW", description:"", budget:"" }
 
-const STATUS_COLORS: Record<string, string> = {
-  NEW: "from-slate-400 to-slate-500",
-  CONCEPT: "from-blue-400 to-blue-600",
-  SKETCH: "from-violet-400 to-violet-600",
-  THREE_D: "from-orange-400 to-orange-600",
-  WORKING_DESIGN: "from-yellow-400 to-yellow-600",
-  CONSTRUCTION: "from-red-400 to-red-600",
-  COMPLETED: "from-emerald-400 to-emerald-600",
-}
-
-const STATUS_DOT: Record<string, string> = {
-  NEW: "bg-slate-400", CONCEPT: "bg-blue-500", SKETCH: "bg-violet-500",
-  THREE_D: "bg-orange-500", WORKING_DESIGN: "bg-yellow-500",
-  CONSTRUCTION: "bg-red-500", COMPLETED: "bg-emerald-500",
-}
-
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [clients,  setClients]  = useState<Client[]>([])
@@ -118,11 +102,10 @@ export default function ProjectsPage() {
   const totalBudget = filtered.reduce((s, p) => s + (p.budget ?? 0), 0)
 
   return (
-    <div className="space-y-8 page-enter arch-pattern">
+    <div className="space-y-8 page-enter">
 
       {/* ── Header banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-8 text-white blueprint-grid">
-        {/* Decorative SVG */}
+      <div className="relative overflow-hidden rounded-2xl bg-[#0d0d0d] border border-[#222] p-8 text-white">
         <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">
           <svg width="200" height="200" viewBox="0 0 200 200">
             <rect x="20" y="20" width="160" height="160" fill="none" stroke="white" strokeWidth="1" strokeDasharray="4 2"/>
@@ -138,17 +121,16 @@ export default function ProjectsPage() {
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="h-10 w-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
-                <FolderKanban className="h-5 w-5 text-blue-400" />
+              <div className="h-10 w-10 rounded-xl bg-[#222] border border-[#333] flex items-center justify-center">
+                <FolderKanban className="h-5 w-5 text-[#aaa]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight">Loyihalar</h2>
-                <p className="text-slate-400 text-sm">{projects.length} ta loyiha · {formatCurrency(totalBudget)} umumiy byudjet</p>
+                <h2 className="text-2xl font-bold tracking-tight text-white">Loyihalar</h2>
+                <p className="text-[#666] text-sm">{projects.length} ta loyiha · {formatCurrency(totalBudget)} umumiy byudjet</p>
               </div>
             </div>
           </div>
-          <Button onClick={openCreate}
-            className="btn-primary-3d text-white gap-2 rounded-xl h-11 px-5">
+          <Button onClick={openCreate} className="btn-primary gap-2 rounded-xl h-11 px-5">
             <Plus className="h-4 w-4" /> Yangi Loyiha
           </Button>
         </div>
@@ -163,10 +145,10 @@ export default function ProjectsPage() {
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200",
                   filter === k
-                    ? "bg-white text-slate-900 border-white shadow-lg scale-105"
-                    : "bg-white/10 text-slate-300 border-white/20 hover:bg-white/20"
+                    ? "bg-white text-[#111] border-white shadow-lg scale-105"
+                    : "bg-[#1a1a1a] text-[#888] border-[#333] hover:bg-[#222]"
                 )}>
-                <div className={cn("h-1.5 w-1.5 rounded-full", STATUS_DOT[k])} />
+                <div className="h-1.5 w-1.5 rounded-full bg-[#555]" />
                 {v.label} <span className="font-bold">{count}</span>
               </button>
             )
@@ -177,16 +159,16 @@ export default function ProjectsPage() {
       {/* ── Search + Filter ── */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
           <Input
             placeholder="Loyiha, mijoz, manzil qidirish..."
             value={search} onChange={e => setSearch(e.target.value)}
-            className="pl-10 h-11 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            className="pl-10 h-11 rounded-xl border-[#222] bg-[#111] text-white"
           />
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-full sm:w-48 h-11 rounded-xl border-slate-200 dark:border-slate-700">
-            <Filter className="h-4 w-4 mr-2 text-slate-400" />
+          <SelectTrigger className="w-full sm:w-48 h-11 rounded-xl border-[#222] bg-[#111] text-white">
+            <Filter className="h-4 w-4 mr-2 text-[#555]" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -206,13 +188,13 @@ export default function ProjectsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-          <div className="h-20 w-20 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 animate-float">
+        <div className="flex flex-col items-center justify-center py-24 text-[#555]">
+          <div className="h-20 w-20 rounded-3xl bg-[#111] border border-[#222] flex items-center justify-center mb-4">
             <FolderKanban className="h-10 w-10 opacity-40" />
           </div>
-          <p className="text-lg font-semibold text-slate-500">Loyiha topilmadi</p>
-          <p className="text-sm mt-1">Yangi loyiha yarating</p>
-          <Button onClick={openCreate} className="mt-5 btn-primary-3d text-white rounded-xl gap-2">
+          <p className="text-lg font-semibold text-[#666]">Loyiha topilmadi</p>
+          <p className="text-sm mt-1 text-[#444]">Yangi loyiha yarating</p>
+          <Button onClick={openCreate} className="mt-5 btn-primary rounded-xl gap-2">
             <Plus className="h-4 w-4" /> Yaratish
           </Button>
         </div>
@@ -220,25 +202,24 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((p, i) => {
             const s = PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
-            const grad = STATUS_COLORS[p.status] ?? "from-slate-400 to-slate-500"
             const overdue = p.deadline && new Date(p.deadline) < new Date() && p.status !== "COMPLETED"
             return (
               <div key={p.id} className="project-card group animate-card"
                 style={{ animationDelay: `${i * 0.07}s` }}>
 
-                {/* Top gradient strip */}
-                <div className={cn("h-1.5 w-full bg-gradient-to-r", grad)} />
+                {/* Top strip */}
+                <div className="h-1.5 w-full bg-[#333]" />
 
                 <div className="p-5">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2 mb-4">
                     <Link href={`/projects/${p.id}`} className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-800 dark:text-white hover:text-blue-600 transition-colors leading-tight line-clamp-2 text-base">
+                      <h3 className="font-bold text-white hover:text-[#ccc] transition-colors leading-tight line-clamp-2 text-base">
                         {p.name}
                       </h3>
                     </Link>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className={cn("text-xs px-2.5 py-1 rounded-full font-semibold", s?.color)}>
+                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-[#1a1a1a] text-[#888] border border-[#333]">
                         {s?.label}
                       </span>
                       <DropdownMenu>
@@ -249,9 +230,9 @@ export default function ProjectsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
                           <DropdownMenuItem onClick={() => openEdit(p)} className="rounded-lg">
-                            <Edit className="h-4 w-4 mr-2 text-blue-500" /> Tahrirlash
+                            <Edit className="h-4 w-4 mr-2 text-[#888]" /> Tahrirlash
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => del(p.id)} className="rounded-lg text-red-600">
+                          <DropdownMenuItem onClick={() => del(p.id)} className="rounded-lg text-[#ccc]">
                             <Trash2 className="h-4 w-4 mr-2" /> O'chirish
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -262,56 +243,55 @@ export default function ProjectsPage() {
                   {/* Info */}
                   <div className="space-y-2 mb-4">
                     {p.client && (
-                      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <div className="h-6 w-6 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center flex-shrink-0">
-                          <User className="h-3 w-3 text-blue-500" />
+                      <div className="flex items-center gap-2 text-sm text-[#666]">
+                        <div className="h-6 w-6 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                          <User className="h-3 w-3 text-[#888]" />
                         </div>
                         <span className="truncate">{p.client.name}</span>
                       </div>
                     )}
                     {p.address && (
-                      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <div className="h-6 w-6 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="h-3 w-3 text-slate-400" />
+                      <div className="flex items-center gap-2 text-sm text-[#666]">
+                        <div className="h-6 w-6 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                          <Building2 className="h-3 w-3 text-[#555]" />
                         </div>
                         <span className="truncate">{p.address}</span>
                       </div>
                     )}
                     {p.deadline && (
-                      <div className={cn("flex items-center gap-2 text-sm", overdue ? "text-red-500" : "text-slate-500 dark:text-slate-400")}>
-                        <div className={cn("h-6 w-6 rounded-lg flex items-center justify-center flex-shrink-0",
-                          overdue ? "bg-red-50 dark:bg-red-950/30" : "bg-slate-50 dark:bg-slate-800")}>
-                          <Clock className={cn("h-3 w-3", overdue ? "text-red-500" : "text-slate-400")} />
+                      <div className={cn("flex items-center gap-2 text-sm", overdue ? "text-[#aaa]" : "text-[#666]")}>
+                        <div className="h-6 w-6 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-3 w-3 text-[#555]" />
                         </div>
                         <span>{overdue ? "⚠️ " : ""}{formatDate(p.deadline)}</span>
                       </div>
                     )}
                     {p.budget && (
                       <div className="flex items-center gap-2 text-sm">
-                        <div className="h-6 w-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center flex-shrink-0">
-                          <DollarSign className="h-3 w-3 text-emerald-500" />
+                        <div className="h-6 w-6 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                          <DollarSign className="h-3 w-3 text-[#888]" />
                         </div>
-                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(p.budget)}</span>
+                        <span className="font-semibold text-[#ccc]">{formatCurrency(p.budget)}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Footer stats */}
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between pt-3 border-t border-[#222]">
                     <div className="flex gap-3">
                       {[
                         { icon: "📁", val: p._count.files, label: "fayl" },
                         { icon: "📝", val: p._count.notes, label: "izoh" },
                         { icon: "✅", val: p._count.tasks, label: "vazifa" },
                       ].map(s => (
-                        <div key={s.label} className="flex items-center gap-1 text-xs text-slate-400">
+                        <div key={s.label} className="flex items-center gap-1 text-xs text-[#555]">
                           <span>{s.icon}</span>
-                          <span className="font-semibold text-slate-600 dark:text-slate-300">{s.val}</span>
+                          <span className="font-semibold text-[#888]">{s.val}</span>
                         </div>
                       ))}
                     </div>
                     <Link href={`/projects/${p.id}`}>
-                      <Button variant="ghost" size="sm" className="h-7 rounded-lg text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 gap-1">
+                      <Button variant="ghost" size="sm" className="h-7 rounded-lg text-xs text-[#888] hover:text-white hover:bg-[#1a1a1a] gap-1">
                         Ko'rish <ChevronRight className="h-3 w-3" />
                       </Button>
                     </Link>
@@ -325,22 +305,22 @@ export default function ProjectsPage() {
 
       {/* ── Dialog ── */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#111] border border-[#222]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{editing ? "Loyihani tahrirlash" : "Yangi Loyiha"}</DialogTitle>
-            <DialogDescription>Loyiha ma'lumotlarini to'ldiring</DialogDescription>
+            <DialogTitle className="text-xl font-bold text-white">{editing ? "Loyihani tahrirlash" : "Yangi Loyiha"}</DialogTitle>
+            <DialogDescription className="text-[#666]">Loyiha ma'lumotlarini to'ldiring</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="sm:col-span-2 space-y-1.5">
-              <Label>Nomi *</Label>
+              <Label className="text-[#888]">Nomi *</Label>
               <Input placeholder="Loyiha nomi" value={form.name}
                 onChange={e => setForm(f => ({...f, name: e.target.value}))}
-                className="rounded-xl h-11" />
+                className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" />
             </div>
             <div className="space-y-1.5">
-              <Label>Mijoz</Label>
+              <Label className="text-[#888]">Mijoz</Label>
               <Select value={form.clientId} onValueChange={v => setForm(f => ({...f, clientId: v}))}>
-                <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Tanlang" /></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Tanlang" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Yo'q —</SelectItem>
                   {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -348,9 +328,9 @@ export default function ProjectsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Holat</Label>
+              <Label className="text-[#888]">Holat</Label>
               <Select value={form.status} onValueChange={v => setForm(f => ({...f, status: v}))}>
-                <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(PROJECT_STATUSES).map(([k,v]) => (
                     <SelectItem key={k} value={k}>{v.label}</SelectItem>
@@ -358,32 +338,32 @@ export default function ProjectsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>Telefon</Label>
-              <Input placeholder="+998 90 000 00 00" value={form.phone} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Telefon</Label>
+              <Input placeholder="+998 90 000 00 00" value={form.phone} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, phone: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label>Email</Label>
-              <Input type="email" placeholder="email@example.com" value={form.email} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Email</Label>
+              <Input type="email" placeholder="email@example.com" value={form.email} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, email: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Manzil</Label>
-              <Input placeholder="Toshkent, ..." value={form.address} className="rounded-xl h-11"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Manzil</Label>
+              <Input placeholder="Toshkent, ..." value={form.address} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, address: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label>Boshlanish</Label>
-              <Input type="date" value={form.startDate} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Boshlanish</Label>
+              <Input type="date" value={form.startDate} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, startDate: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label>Deadline</Label>
-              <Input type="date" value={form.deadline} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Deadline</Label>
+              <Input type="date" value={form.deadline} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, deadline: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Byudjet (so'm)</Label>
-              <Input type="number" placeholder="0" value={form.budget} className="rounded-xl h-11"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Byudjet (so'm)</Label>
+              <Input type="number" placeholder="0" value={form.budget} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, budget: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Tavsif</Label>
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Tavsif</Label>
               <Textarea rows={3} placeholder="Loyiha haqida..." value={form.description}
-                className="rounded-xl resize-none"
+                className="rounded-xl resize-none bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, description: e.target.value}))} /></div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Bekor</Button>
-            <Button onClick={save} disabled={saving} className="btn-primary-3d text-white rounded-xl">
+            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl border-[#333] text-[#888]">Bekor</Button>
+            <Button onClick={save} disabled={saving} className="btn-primary rounded-xl">
               {saving ? "Saqlanmoqda..." : editing ? "Saqlash" : "Yaratish"}
             </Button>
           </DialogFooter>

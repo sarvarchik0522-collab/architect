@@ -20,15 +20,6 @@ interface Client {
 
 const EMPTY = { name:"", phone:"", email:"", company:"", address:"", notes:"" }
 
-const AVATAR_GRADIENTS = [
-  "from-blue-500 to-violet-600",
-  "from-emerald-500 to-teal-600",
-  "from-orange-500 to-pink-600",
-  "from-violet-500 to-purple-700",
-  "from-pink-500 to-rose-600",
-  "from-cyan-500 to-blue-600",
-]
-const getGradient = (name: string) => AVATAR_GRADIENTS[name.charCodeAt(0) % AVATAR_GRADIENTS.length]
 const initials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0,2)
 
 export default function ClientsPage() {
@@ -84,33 +75,33 @@ export default function ClientsPage() {
   )
 
   return (
-    <div className="space-y-8 page-enter arch-pattern">
+    <div className="space-y-8 page-enter">
 
       {/* ── Header banner ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 p-8 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-[#0d0d0d] border border-[#222] p-8 text-white">
         <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">
           <svg width="180" height="180" viewBox="0 0 180 180" className="animate-float">
             <circle cx="90" cy="90" r="70" fill="none" stroke="white" strokeWidth="1"/>
             <circle cx="90" cy="90" r="50" fill="none" stroke="white" strokeWidth="0.7"/>
             <circle cx="90" cy="90" r="30" fill="none" stroke="white" strokeWidth="0.5"/>
             {[0,60,120,180,240,300].map((deg, i) => (
-              <circle key={i} cx={90 + 50*Math.cos(deg*Math.PI/180)} cy={90 + 50*Math.sin(deg*Math.PI/180)} r="6" fill="white" opacity="0.6"/>
+              <circle key={i} cx={90 + 50*Math.cos(deg*Math.PI/180)} cy={90 + 50*Math.sin(deg*Math.PI/180)} r="6" fill="white" opacity="0.4"/>
             ))}
           </svg>
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="h-10 w-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
-                <Users className="h-5 w-5 text-white" />
+              <div className="h-10 w-10 rounded-xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                <Users className="h-5 w-5 text-[#aaa]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight">Mijozlar</h2>
-                <p className="text-violet-200 text-sm">{clients.length} ta mijoz · CRM tizimi</p>
+                <h2 className="text-2xl font-bold tracking-tight text-white">Mijozlar</h2>
+                <p className="text-[#666] text-sm">{clients.length} ta mijoz · CRM tizimi</p>
               </div>
             </div>
           </div>
-          <Button onClick={openCreate} className="bg-white text-violet-700 hover:bg-violet-50 gap-2 rounded-xl h-10 px-5 font-semibold shadow-lg">
+          <Button onClick={openCreate} className="btn-primary gap-2 rounded-xl h-10 px-5">
             <Plus className="h-4 w-4" /> Yangi Mijoz
           </Button>
         </div>
@@ -121,11 +112,11 @@ export default function ClientsPage() {
             { label: "Kompaniyalar",   value: clients.filter(c=>c.company).length,     icon: "🏢" },
             { label: "Faol loyihalar", value: clients.reduce((s,c)=>s+c._count.projects,0), icon: "📐" },
           ].map(s => (
-            <div key={s.label} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-white/20">
+            <div key={s.label} className="flex items-center gap-2 bg-[#1a1a1a] rounded-xl px-4 py-2.5 border border-[#333]">
               <span className="text-xl">{s.icon}</span>
               <div>
-                <p className="text-xl font-bold leading-none">{s.value}</p>
-                <p className="text-xs text-violet-200">{s.label}</p>
+                <p className="text-xl font-bold leading-none text-white">{s.value}</p>
+                <p className="text-xs text-[#555]">{s.label}</p>
               </div>
             </div>
           ))}
@@ -134,10 +125,10 @@ export default function ClientsPage() {
 
       {/* ── Search ── */}
       <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
         <Input placeholder="Mijoz, kompaniya, telefon qidirish..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="pl-10 h-11 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+          className="pl-10 h-11 rounded-xl border-[#222] bg-[#111] text-white" />
       </div>
 
       {/* ── Grid ── */}
@@ -146,36 +137,33 @@ export default function ClientsPage() {
           {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton h-48 rounded-2xl" style={{ animationDelay:`${i*0.08}s` }} />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-          <div className="h-20 w-20 rounded-3xl bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center mb-4 animate-float">
-            <Users className="h-10 w-10 text-violet-300" />
+        <div className="flex flex-col items-center justify-center py-24 text-[#555]">
+          <div className="h-20 w-20 rounded-3xl bg-[#111] border border-[#222] flex items-center justify-center mb-4">
+            <Users className="h-10 w-10 opacity-30" />
           </div>
-          <p className="text-lg font-semibold text-slate-500">Mijoz topilmadi</p>
-          <Button onClick={openCreate} className="mt-5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl gap-2">
+          <p className="text-lg font-semibold text-[#666]">Mijoz topilmadi</p>
+          <Button onClick={openCreate} className="mt-5 btn-primary rounded-xl gap-2">
             <Plus className="h-4 w-4" /> Yaratish
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map((c, i) => (
-            <div key={c.id} className="client-card bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 group animate-card"
+            <div key={c.id} className="arch-card arch-card-lift group animate-card"
               style={{ animationDelay:`${i*0.07}s` }}>
-              {/* Top accent */}
-              <div className={cn("h-1 w-full bg-gradient-to-r", getGradient(c.name))} />
+              <div className="h-1 w-full bg-[#333]" />
               <div className="p-5">
                 <div className="flex items-start gap-4 mb-4">
-                  {/* 3D Avatar */}
+                  {/* Monochrome Avatar */}
                   <div className="relative flex-shrink-0">
-                    <div className={cn("client-avatar h-14 w-14 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg shadow-lg", getGradient(c.name))}>
+                    <div className="h-14 w-14 rounded-2xl bg-[#222] border border-[#333] flex items-center justify-center text-white font-bold text-lg">
                       {initials(c.name)}
                     </div>
-                    {/* Glow */}
-                    <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-30 blur-md transition-opacity", getGradient(c.name))} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <Link href={`/clients/${c.id}`}>
-                        <h3 className="font-bold text-slate-800 dark:text-white hover:text-violet-600 transition-colors leading-tight">{c.name}</h3>
+                        <h3 className="font-bold text-white hover:text-[#ccc] transition-colors leading-tight">{c.name}</h3>
                       </Link>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -185,17 +173,17 @@ export default function ClientsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
                           <DropdownMenuItem onClick={() => openEdit(c)} className="rounded-lg">
-                            <Edit className="h-4 w-4 mr-2 text-violet-500" /> Tahrirlash
+                            <Edit className="h-4 w-4 mr-2 text-[#888]" /> Tahrirlash
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => del(c.id)} className="rounded-lg text-red-600">
+                          <DropdownMenuItem onClick={() => del(c.id)} className="rounded-lg text-[#ccc]">
                             <Trash2 className="h-4 w-4 mr-2" /> O'chirish
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                     {c.company && (
-                      <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5">
-                        <Building className="h-3.5 w-3.5 text-violet-400" /> {c.company}
+                      <p className="text-sm text-[#555] flex items-center gap-1.5 mt-0.5">
+                        <Building className="h-3.5 w-3.5 text-[#444]" /> {c.company}
                       </p>
                     )}
                   </div>
@@ -204,17 +192,17 @@ export default function ClientsPage() {
                 {/* Contact info */}
                 <div className="space-y-2">
                   {c.phone && (
-                    <a href={`tel:${c.phone}`} className="flex items-center gap-2.5 text-sm text-slate-500 hover:text-violet-600 transition-colors group/link">
-                      <div className="h-7 w-7 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center flex-shrink-0 group-hover/link:bg-violet-100 transition-colors">
-                        <Phone className="h-3.5 w-3.5 text-violet-500" />
+                    <a href={`tel:${c.phone}`} className="flex items-center gap-2.5 text-sm text-[#555] hover:text-[#aaa] transition-colors group/link">
+                      <div className="h-7 w-7 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                        <Phone className="h-3.5 w-3.5 text-[#666]" />
                       </div>
                       <span className="font-medium">{c.phone}</span>
                     </a>
                   )}
                   {c.email && (
-                    <a href={`mailto:${c.email}`} className="flex items-center gap-2.5 text-sm text-slate-500 hover:text-violet-600 transition-colors group/link truncate">
-                      <div className="h-7 w-7 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center flex-shrink-0 group-hover/link:bg-violet-100 transition-colors">
-                        <Mail className="h-3.5 w-3.5 text-violet-500" />
+                    <a href={`mailto:${c.email}`} className="flex items-center gap-2.5 text-sm text-[#555] hover:text-[#aaa] transition-colors group/link truncate">
+                      <div className="h-7 w-7 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
+                        <Mail className="h-3.5 w-3.5 text-[#666]" />
                       </div>
                       <span className="truncate">{c.email}</span>
                     </a>
@@ -223,28 +211,25 @@ export default function ClientsPage() {
 
                 {/* Projects */}
                 {c.projects.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="mt-4 pt-3 border-t border-[#222]">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{c._count.projects} ta loyiha</p>
+                      <p className="text-xs font-semibold text-[#444] uppercase tracking-wider">{c._count.projects} ta loyiha</p>
                       <Link href={`/clients/${c.id}`}>
-                        <span className="text-xs text-violet-500 flex items-center gap-0.5">
+                        <span className="text-xs text-[#666] flex items-center gap-0.5 hover:text-[#aaa]">
                           Barchasi <ChevronRight className="h-3 w-3" />
                         </span>
                       </Link>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {c.projects.slice(0,3).map(p => {
-                        const s = PROJECT_STATUSES[p.status as keyof typeof PROJECT_STATUSES]
-                        return (
-                          <Link key={p.id} href={`/projects/${p.id}`}>
-                            <span className={cn("text-xs px-2 py-0.5 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity", s?.color)}>
-                              {p.name.length > 16 ? p.name.slice(0,16)+"…" : p.name}
-                            </span>
-                          </Link>
-                        )
-                      })}
+                      {c.projects.slice(0,3).map(p => (
+                        <Link key={p.id} href={`/projects/${p.id}`}>
+                          <span className="text-xs px-2 py-0.5 rounded-lg font-medium cursor-pointer bg-[#1a1a1a] text-[#888] border border-[#333] hover:bg-[#222] transition-colors">
+                            {p.name.length > 16 ? p.name.slice(0,16)+"…" : p.name}
+                          </span>
+                        </Link>
+                      ))}
                       {c.projects.length > 3 && (
-                        <span className="text-xs text-slate-400 px-1">+{c.projects.length-3}</span>
+                        <span className="text-xs text-[#444] px-1">+{c.projects.length-3}</span>
                       )}
                     </div>
                   </div>
@@ -257,34 +242,34 @@ export default function ClientsPage() {
 
       {/* ── Dialog ── */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg rounded-2xl">
+        <DialogContent className="max-w-lg rounded-2xl bg-[#111] border border-[#222]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{editing ? "Mijozni tahrirlash" : "Yangi Mijoz"}</DialogTitle>
-            <DialogDescription>Mijoz ma'lumotlarini kiriting</DialogDescription>
+            <DialogTitle className="text-xl font-bold text-white">{editing ? "Mijozni tahrirlash" : "Yangi Mijoz"}</DialogTitle>
+            <DialogDescription className="text-[#666]">Mijoz ma'lumotlarini kiriting</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-            <div className="sm:col-span-2 space-y-1.5"><Label>Ism-familiya *</Label>
-              <Input placeholder="Bobur Toshmatov" value={form.name} className="rounded-xl h-11"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Ism-familiya *</Label>
+              <Input placeholder="Bobur Toshmatov" value={form.name} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, name: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label>Telefon</Label>
-              <Input placeholder="+998 90 123 45 67" value={form.phone} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Telefon</Label>
+              <Input placeholder="+998 90 123 45 67" value={form.phone} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, phone: e.target.value}))} /></div>
-            <div className="space-y-1.5"><Label>Email</Label>
-              <Input type="email" placeholder="client@example.com" value={form.email} className="rounded-xl h-11"
+            <div className="space-y-1.5"><Label className="text-[#888]">Email</Label>
+              <Input type="email" placeholder="client@example.com" value={form.email} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, email: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Kompaniya</Label>
-              <Input placeholder="ABC Qurilish LLC" value={form.company} className="rounded-xl h-11"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Kompaniya</Label>
+              <Input placeholder="ABC Qurilish LLC" value={form.company} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, company: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Manzil</Label>
-              <Input placeholder="Toshkent, Chilonzor 14" value={form.address} className="rounded-xl h-11"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Manzil</Label>
+              <Input placeholder="Toshkent, Chilonzor 14" value={form.address} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, address: e.target.value}))} /></div>
-            <div className="sm:col-span-2 space-y-1.5"><Label>Izoh</Label>
-              <Textarea rows={2} placeholder="Qo'shimcha ma'lumot..." value={form.notes} className="rounded-xl resize-none"
+            <div className="sm:col-span-2 space-y-1.5"><Label className="text-[#888]">Izoh</Label>
+              <Textarea rows={2} placeholder="Qo'shimcha ma'lumot..." value={form.notes} className="rounded-xl resize-none bg-[#0d0d0d] border-[#333] text-white"
                 onChange={e => setForm(f => ({...f, notes: e.target.value}))} /></div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Bekor</Button>
-            <Button onClick={save} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
+            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl border-[#333] text-[#888]">Bekor</Button>
+            <Button onClick={save} disabled={saving} className="btn-primary rounded-xl">
               {saving ? "Saqlanmoqda..." : editing ? "Saqlash" : "Yaratish"}
             </Button>
           </DialogFooter>

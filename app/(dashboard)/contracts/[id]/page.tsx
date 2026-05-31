@@ -9,11 +9,11 @@ import { useToast } from "@/hooks/use-toast"
 import { cn, formatDate, formatCurrency } from "@/lib/utils"
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  DRAFT:     { label: "Qoralama",   color: "bg-slate-100 text-slate-600" },
-  ACTIVE:    { label: "Faol",       color: "bg-green-100 text-green-700" },
-  PENDING:   { label: "Kutilmoqda", color: "bg-yellow-100 text-yellow-700" },
-  COMPLETED: { label: "Tugallandi", color: "bg-blue-100 text-blue-700" },
-  CANCELLED: { label: "Bekor",      color: "bg-red-100 text-red-600" },
+  DRAFT:     { label: "Qoralama",   color: "bg-[#1a1a1a] text-[#666] border border-[#333]" },
+  ACTIVE:    { label: "Faol",       color: "bg-[#1a1a1a] text-[#aaa] border border-[#444]" },
+  PENDING:   { label: "Kutilmoqda", color: "bg-[#1a1a1a] text-[#888] border border-[#333]" },
+  COMPLETED: { label: "Tugallandi", color: "bg-[#1a1a1a] text-[#ccc] border border-[#444]" },
+  CANCELLED: { label: "Bekor",      color: "bg-[#1a1a1a] text-[#444] border border-[#222]" },
 }
 
 export default function ContractDetailPage() {
@@ -56,65 +56,52 @@ export default function ContractDetailPage() {
   if (loading) {
     return (
       <div className="space-y-4 max-w-4xl">
-        <div className="h-12 rounded-2xl bg-amber-100/50 dark:bg-amber-900/20 animate-pulse" />
-        <div className="h-[600px] rounded-3xl bg-amber-100/30 dark:bg-amber-900/10 animate-pulse" />
+        <div className="h-12 rounded-2xl bg-[#111] border border-[#222] animate-pulse" />
+        <div className="h-[600px] rounded-3xl bg-[#111] border border-[#222] animate-pulse" />
       </div>
     )
   }
   if (!contract) return (
-    <div className="flex flex-col items-center py-24 text-amber-400/50">
-      <p className="text-lg font-semibold">Shartnoma topilmadi</p>
-      <Link href="/contracts"><Button variant="ghost" className="mt-4 gap-2"><ArrowLeft className="h-4 w-4" />Orqaga</Button></Link>
+    <div className="flex flex-col items-center py-24 text-[#444]">
+      <p className="text-lg font-semibold text-[#555]">Shartnoma topilmadi</p>
+      <Link href="/contracts">
+        <Button variant="ghost" className="mt-4 gap-2 text-[#888]"><ArrowLeft className="h-4 w-4" />Orqaga</Button>
+      </Link>
     </div>
   )
 
   const sm = STATUS_META[contract.status] ?? STATUS_META.DRAFT
 
-
   return (
     <>
-      {/* ── Print styles injected in head ── */}
       <style>{`
         @media print {
-          /* Hide everything except the contract doc */
           body * { visibility: hidden; }
           #contract-print, #contract-print * { visibility: visible; }
           #contract-print { position: fixed; top: 0; left: 0; width: 100%; background: white !important; }
-
-          /* Reset colors for print */
           body { background: white !important; margin: 0; padding: 0; }
           #contract-print { padding: 20mm; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
-
-          /* Force color printing */
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
-
-          /* Typography */
-          #contract-print h1, #contract-print h2, #contract-print h3 { color: #1a3a6b !important; }
+          #contract-print h1, #contract-print h2, #contract-print h3 { color: #111 !important; }
           #contract-print p, #contract-print span, #contract-print td { color: #1a1a1a !important; }
-
-          /* Grid for print */
           .print-grid-2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
-
-          @page {
-            margin: 15mm;
-            size: A4;
-          }
+          @page { margin: 15mm; size: A4; }
         }
       `}</style>
 
       <div className="max-w-4xl space-y-4 page-enter">
 
         {/* ── Toolbar (hidden on print) ── */}
-        <div className="flex items-center justify-between gap-3 no-print" style={{ printVisibility: "hidden" } as any}>
+        <div className="flex items-center justify-between gap-3 no-print">
           <Link href="/contracts">
-            <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-amber-700 hover:text-amber-900">
+            <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-[#888] hover:text-white">
               <ArrowLeft className="h-4 w-4" />Orqaga
             </Button>
           </Link>
           <div className="flex items-center gap-2">
             <Select value={contract.status} onValueChange={changeStatus}>
-              <SelectTrigger className="h-9 w-36 rounded-xl border-[#e8d8b0] dark:border-[#2a1e08] text-sm">
+              <SelectTrigger className="h-9 w-36 rounded-xl border-[#333] bg-[#111] text-white text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -125,11 +112,11 @@ export default function ContractDetailPage() {
                 <SelectItem value="CANCELLED">Bekor</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handlePrint} className="btn-gold text-white gap-2 rounded-xl h-9">
+            <Button onClick={handlePrint} className="btn-primary gap-2 rounded-xl h-9">
               <Printer className="h-4 w-4" />PDF yuklab olish
             </Button>
             <Button variant="ghost" size="icon" onClick={del}
-              className="h-9 w-9 rounded-xl text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20">
+              className="h-9 w-9 rounded-xl text-[#444] hover:bg-[#1a1a1a] hover:text-[#888]">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -137,11 +124,10 @@ export default function ContractDetailPage() {
 
         {/* ── Contract Document ── */}
         <div id="contract-print"
-          className="bg-white dark:bg-[#0e0b04] rounded-3xl border border-[#e8d8b0] dark:border-[#2a1e08] overflow-hidden shadow-xl">
+          className="bg-[#0d0d0d] rounded-3xl border border-[#222] overflow-hidden shadow-xl">
 
           {/* ─ Header ─ */}
-          <div className="contract-header bg-gradient-to-br from-[#0A2342] to-[#1a3a6b] px-8 py-8 text-white text-center relative overflow-hidden">
-            {/* Decorative rings */}
+          <div className="bg-[#111] border-b border-[#222] px-8 py-8 text-white text-center relative overflow-hidden">
             <div className="absolute right-4 top-4 opacity-10 pointer-events-none">
               <svg width="160" height="160" viewBox="0 0 200 200">
                 <polygon points="100,10 190,55 190,145 100,190 10,145 10,55" fill="none" stroke="white" strokeWidth="1.5"/>
@@ -151,48 +137,47 @@ export default function ContractDetailPage() {
             </div>
             <div className="relative z-10">
               <div className="flex justify-center mb-4">
-                <div className="h-14 w-14 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center text-3xl">🏛️</div>
+                <div className="h-14 w-14 rounded-2xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center text-3xl">🏛️</div>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">ARXITEKTURA XIZMATLARI SHARTNOMASI</h1>
-              <p className="text-blue-200/80 mt-2 text-sm font-semibold">Shartnoma № {contract.contractNumber}</p>
-              <p className="text-blue-200/60 text-xs mt-1">Tuzilgan sana: {formatDate(contract.createdAt)}</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">ARXITEKTURA XIZMATLARI SHARTNOMASI</h1>
+              <p className="text-[#666] mt-2 text-sm font-semibold">Shartnoma № {contract.contractNumber}</p>
+              <p className="text-[#444] text-xs mt-1">Tuzilgan sana: {formatDate(contract.createdAt)}</p>
               <span className={cn("inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold no-print", sm.color)}>
                 {sm.label}
               </span>
             </div>
           </div>
 
-
           <div className="p-6 sm:p-8 space-y-8">
 
             {/* ─ Parties ─ */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 print-grid-2">
               {/* Buyurtmachi */}
-              <div className="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
-                <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-                  <span className="h-6 w-6 rounded-lg bg-[#0A2342] text-white flex items-center justify-center text-xs flex-shrink-0 font-bold">1</span>
+              <div className="p-5 rounded-2xl bg-[#111] border border-[#222]">
+                <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
+                  <span className="h-6 w-6 rounded-lg bg-[#222] border border-[#333] text-[#888] flex items-center justify-center text-xs flex-shrink-0 font-bold">1</span>
                   Buyurtmachi
                 </h3>
-                <div className="space-y-2 text-sm text-[#3d2800] dark:text-amber-100">
+                <div className="space-y-2 text-sm text-[#aaa]">
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Ism-sharif</p>
-                    <p className="font-bold">{contract.clientName}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Ism-sharif</p>
+                    <p className="font-bold text-white">{contract.clientName}</p>
                   </div>
                   {contract.clientPassport && (
                     <div>
-                      <p className="text-xs text-[#B8860B]/60 mb-0.5">Pasport</p>
+                      <p className="text-xs text-[#444] mb-0.5">Pasport</p>
                       <p>{contract.clientPassport}</p>
                     </div>
                   )}
                   {contract.clientPhone && (
                     <div>
-                      <p className="text-xs text-[#B8860B]/60 mb-0.5">Telefon</p>
+                      <p className="text-xs text-[#444] mb-0.5">Telefon</p>
                       <p>{contract.clientPhone}</p>
                     </div>
                   )}
                   {contract.clientAddress && (
                     <div>
-                      <p className="text-xs text-[#B8860B]/60 mb-0.5">Manzil</p>
+                      <p className="text-xs text-[#444] mb-0.5">Manzil</p>
                       <p>{contract.clientAddress}</p>
                     </div>
                   )}
@@ -200,25 +185,25 @@ export default function ContractDetailPage() {
               </div>
 
               {/* Ijrochi */}
-              <div className="p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30">
-                <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-                  <span className="h-6 w-6 rounded-lg bg-[#B8860B] text-white flex items-center justify-center text-xs flex-shrink-0 font-bold">2</span>
+              <div className="p-5 rounded-2xl bg-[#111] border border-[#222]">
+                <h3 className="font-bold text-white mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
+                  <span className="h-6 w-6 rounded-lg bg-[#222] border border-[#333] text-[#888] flex items-center justify-center text-xs flex-shrink-0 font-bold">2</span>
                   Ijrochi (Arxitektor)
                 </h3>
-                <div className="space-y-2 text-sm text-[#3d2800] dark:text-amber-100">
+                <div className="space-y-2 text-sm text-[#aaa]">
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Ism-sharif</p>
-                    <p className="font-bold">{contract.architectName}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Ism-sharif</p>
+                    <p className="font-bold text-white">{contract.architectName}</p>
                   </div>
                   {contract.architectPhone && (
                     <div>
-                      <p className="text-xs text-[#B8860B]/60 mb-0.5">Telefon</p>
+                      <p className="text-xs text-[#444] mb-0.5">Telefon</p>
                       <p>{contract.architectPhone}</p>
                     </div>
                   )}
                   {contract.architectAddress && (
                     <div>
-                      <p className="text-xs text-[#B8860B]/60 mb-0.5">Manzil</p>
+                      <p className="text-xs text-[#444] mb-0.5">Manzil</p>
                       <p>{contract.architectAddress}</p>
                     </div>
                   )}
@@ -227,50 +212,49 @@ export default function ContractDetailPage() {
             </div>
 
             {/* ─ Project Info ─ */}
-            <div className="p-5 rounded-2xl bg-slate-50/60 dark:bg-slate-900/30 border border-[#e8d8b0] dark:border-[#2a1e08]">
-              <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-4 text-sm uppercase tracking-wider">
+            <div className="p-5 rounded-2xl bg-[#111] border border-[#222]">
+              <h3 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">
                 📐 Loyiha Ma'lumotlari
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-xs text-[#B8860B]/60 mb-0.5">Loyiha nomi</p>
-                  <p className="font-semibold text-[#3d2800] dark:text-amber-100">{contract.projectName}</p>
+                  <p className="text-xs text-[#444] mb-0.5">Loyiha nomi</p>
+                  <p className="font-semibold text-white">{contract.projectName}</p>
                 </div>
                 {contract.projectType && (
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Loyiha turi</p>
-                    <p className="font-semibold text-[#3d2800] dark:text-amber-100">{contract.projectType}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Loyiha turi</p>
+                    <p className="font-semibold text-white">{contract.projectType}</p>
                   </div>
                 )}
                 {contract.projectAddress && (
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Manzil</p>
-                    <p className="font-semibold text-[#3d2800] dark:text-amber-100">{contract.projectAddress}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Manzil</p>
+                    <p className="font-semibold text-white">{contract.projectAddress}</p>
                   </div>
                 )}
                 {contract.startDate && (
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Boshlanish sanasi</p>
-                    <p className="font-semibold text-[#3d2800] dark:text-amber-100">{formatDate(contract.startDate)}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Boshlanish sanasi</p>
+                    <p className="font-semibold text-white">{formatDate(contract.startDate)}</p>
                   </div>
                 )}
                 {contract.endDate && (
                   <div>
-                    <p className="text-xs text-[#B8860B]/60 mb-0.5">Tugash sanasi</p>
-                    <p className="font-semibold text-[#3d2800] dark:text-amber-100">{formatDate(contract.endDate)}</p>
+                    <p className="text-xs text-[#444] mb-0.5">Tugash sanasi</p>
+                    <p className="font-semibold text-white">{formatDate(contract.endDate)}</p>
                   </div>
                 )}
               </div>
             </div>
 
-
             {/* ─ Work Items ─ */}
             <div>
-              <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-3 text-sm uppercase tracking-wider">
+              <h3 className="font-bold text-white mb-3 text-sm uppercase tracking-wider">
                 📋 Bajarilishi Kerak Bo'lgan Ishlar
               </h3>
-              <div className="rounded-2xl overflow-hidden border border-[#e8d8b0] dark:border-[#2a1e08]">
-                <pre className="p-5 text-sm text-[#3d2800] dark:text-amber-100 whitespace-pre-wrap font-mono bg-amber-50/40 dark:bg-amber-950/10 leading-relaxed">
+              <div className="rounded-2xl overflow-hidden border border-[#222]">
+                <pre className="p-5 text-sm text-[#aaa] whitespace-pre-wrap font-mono bg-[#111] leading-relaxed">
                   {contract.workItems}
                 </pre>
               </div>
@@ -278,23 +262,23 @@ export default function ContractDetailPage() {
 
             {/* ─ Payment ─ */}
             <div>
-              <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-3 text-sm uppercase tracking-wider">
+              <h3 className="font-bold text-white mb-3 text-sm uppercase tracking-wider">
                 💳 To'lov Shartlari
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 text-center">
-                  <p className="text-xs text-emerald-600/70 uppercase tracking-wider mb-1 font-semibold">Jami Summa</p>
-                  <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+                <div className="p-5 rounded-2xl bg-[#111] border border-[#222] text-center">
+                  <p className="text-xs text-[#444] uppercase tracking-wider mb-1 font-semibold">Jami Summa</p>
+                  <p className="text-3xl font-bold text-white">
                     {formatCurrency(contract.totalAmount)}
                   </p>
                 </div>
                 {contract.advanceAmount > 0 && (
-                  <div className="p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 text-center">
-                    <p className="text-xs text-blue-600/70 uppercase tracking-wider mb-1 font-semibold">Avans To'lov</p>
-                    <p className="text-3xl font-bold text-blue-700 dark:text-blue-400">
+                  <div className="p-5 rounded-2xl bg-[#111] border border-[#222] text-center">
+                    <p className="text-xs text-[#444] uppercase tracking-wider mb-1 font-semibold">Avans To'lov</p>
+                    <p className="text-3xl font-bold text-white">
                       {formatCurrency(contract.advanceAmount)}
                     </p>
-                    <p className="text-xs text-blue-500/60 mt-1">
+                    <p className="text-xs text-[#444] mt-1">
                       Qoldiq: {formatCurrency(contract.totalAmount - contract.advanceAmount)}
                     </p>
                   </div>
@@ -305,11 +289,11 @@ export default function ContractDetailPage() {
             {/* ─ Terms ─ */}
             {contract.terms && (
               <div>
-                <h3 className="font-bold text-[#0A2342] dark:text-amber-100 mb-3 text-sm uppercase tracking-wider">
+                <h3 className="font-bold text-white mb-3 text-sm uppercase tracking-wider">
                   📄 Shartnoma Shartlari
                 </h3>
-                <div className="p-5 rounded-2xl border border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/30 dark:bg-amber-950/10">
-                  <pre className="text-sm text-[#3d2800] dark:text-amber-100 whitespace-pre-wrap leading-relaxed">
+                <div className="p-5 rounded-2xl border border-[#222] bg-[#111]">
+                  <pre className="text-sm text-[#888] whitespace-pre-wrap leading-relaxed">
                     {contract.terms}
                   </pre>
                 </div>
@@ -317,30 +301,30 @@ export default function ContractDetailPage() {
             )}
 
             {/* ─ Signatures ─ */}
-            <div className="grid grid-cols-2 gap-8 pt-6 border-t border-[#e8d8b0] dark:border-[#2a1e08]">
+            <div className="grid grid-cols-2 gap-8 pt-6 border-t border-[#222]">
               {[
                 { label: "Buyurtmachi", name: contract.clientName },
                 { label: "Ijrochi (Arxitektor)", name: contract.architectName },
               ].map(s => (
                 <div key={s.label} className="text-center">
-                  <p className="text-xs text-[#B8860B]/60 uppercase tracking-wider mb-6 font-semibold">{s.label}</p>
-                  <div className="border-b-2 border-dashed border-[#B8860B]/30 dark:border-[#B8860B]/20 mb-2 h-10" />
-                  <p className="text-sm font-semibold text-[#3d2800] dark:text-amber-100">{s.name}</p>
-                  <p className="text-xs text-[#B8860B]/40 mt-0.5">Imzo / Sana</p>
+                  <p className="text-xs text-[#444] uppercase tracking-wider mb-6 font-semibold">{s.label}</p>
+                  <div className="border-b-2 border-dashed border-[#333] mb-2 h-10" />
+                  <p className="text-sm font-semibold text-[#aaa]">{s.name}</p>
+                  <p className="text-xs text-[#333] mt-0.5">Imzo / Sana</p>
                 </div>
               ))}
             </div>
 
             {/* ─ Stamp ─ */}
             <div className="flex justify-center mt-2">
-              <div className="h-28 w-28 rounded-full border-4 border-dashed border-[#B8860B]/20 dark:border-[#B8860B]/15 flex flex-col items-center justify-center gap-1">
-                <span className="text-xl opacity-30">🏛️</span>
-                <p className="text-xs text-[#B8860B]/30 text-center leading-tight font-medium">Muhr<br/>joyi</p>
+              <div className="h-28 w-28 rounded-full border-4 border-dashed border-[#222] flex flex-col items-center justify-center gap-1">
+                <span className="text-xl opacity-20">🏛️</span>
+                <p className="text-xs text-[#333] text-center leading-tight font-medium">Muhr<br/>joyi</p>
               </div>
             </div>
 
             {/* ─ Footer ─ */}
-            <p className="text-center text-xs text-[#B8860B]/30 pt-2">
+            <p className="text-center text-xs text-[#333] pt-2">
               Arxitektor Kundaligi · Shartnoma #{contract.contractNumber} · {formatDate(contract.createdAt)}
             </p>
           </div>

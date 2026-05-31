@@ -13,7 +13,6 @@ import { cn, formatCurrency } from "@/lib/utils"
 
 interface WorkItem { name: string; unit: string; qty: number; price: number }
 
-
 const EMPTY_FORM = {
   contractNumber: `SH-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
   title: "", status: "DRAFT",
@@ -91,55 +90,57 @@ export default function NewContractPage() {
     } finally { setSaving(false) }
   }
 
+  const inputCls = "rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"
+  const labelCls = "text-xs font-semibold text-[#666]"
+
   return (
     <div className="max-w-4xl space-y-6 page-enter">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <Link href="/contracts">
-          <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-amber-700 hover:text-amber-900">
+          <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-[#888] hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Orqaga
           </Button>
         </Link>
-        <Button onClick={save} disabled={saving} className="btn-blue text-white rounded-xl gap-2">
+        <Button onClick={save} disabled={saving} className="btn-primary rounded-xl gap-2">
           <Save className="h-4 w-4" />
           {saving ? "Saqlanmoqda..." : "Shartnomani Saqlash"}
         </Button>
       </div>
 
-      <div className="card-gold p-6 space-y-6">
-        <div className="flex items-center gap-3 section-header pb-4">
+      <div className="arch-card p-6 space-y-6">
+        <div className="flex items-center gap-3 pb-4 border-b border-[#222]">
           <span className="text-2xl">📜</span>
           <div>
-            <h2 className="text-xl font-bold text-[#3d2800] dark:text-amber-100">Yangi Shartnoma</h2>
-            <p className="text-xs text-amber-600/50">Barcha maydonlarni to'ldiring</p>
+            <h2 className="text-xl font-bold text-white">Yangi Shartnoma</h2>
+            <p className="text-xs text-[#444]">Barcha maydonlarni to'ldiring</p>
           </div>
         </div>
 
         {/* Contract info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-amber-800 dark:text-amber-300 font-semibold text-xs">Shartnoma raqami *</Label>
+            <Label className={labelCls}>Shartnoma raqami *</Label>
             <Input value={form.contractNumber} onChange={e => setForm(f => ({...f, contractNumber: e.target.value}))}
-              className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+              className={inputCls} />
           </div>
           <div className="sm:col-span-2 space-y-1.5">
-            <Label className="text-amber-800 dark:text-amber-300 font-semibold text-xs">Sarlavha *</Label>
+            <Label className={labelCls}>Sarlavha *</Label>
             <Input placeholder="Loyiha arxitektura xizmatlari shartnomasi" value={form.title}
               onChange={e => setForm(f => ({...f, title: e.target.value}))}
-              className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+              className={inputCls} />
           </div>
         </div>
-
 
         {/* 2 columns: Client + Architect */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Client */}
           <div className="space-y-4">
-            <div className="ornament-divider text-xs text-amber-600/60 font-bold uppercase tracking-widest">👤 Buyurtmachi</div>
+            <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">👤 Buyurtmachi</p>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Bazadan tanlash</Label>
+              <Label className={labelCls}>Bazadan tanlash</Label>
               <Select value={form.clientId} onValueChange={fillFromClient}>
-                <SelectTrigger className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08]"><SelectValue placeholder="Mijoz tanlang"/></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Mijoz tanlang"/></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Qo'lda kiritish —</SelectItem>
                   {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -153,27 +154,27 @@ export default function NewContractPage() {
               { field:"clientAddress", label:"Manzil",          placeholder:"Toshkent, Chilonzor 14" },
             ].map(f => (
               <div key={f.field} className="space-y-1.5">
-                <Label className="text-xs font-semibold text-amber-700/70">{f.label}</Label>
+                <Label className={labelCls}>{f.label}</Label>
                 <Input placeholder={f.placeholder} value={(form as any)[f.field]}
                   onChange={e => setForm(prev => ({...prev, [f.field]: e.target.value}))}
-                  className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                  className={inputCls} />
               </div>
             ))}
           </div>
 
           {/* Architect */}
           <div className="space-y-4">
-            <div className="ornament-divider text-xs text-amber-600/60 font-bold uppercase tracking-widest">🏛️ Arxitektor (Ijrochi)</div>
+            <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">🏛️ Arxitektor (Ijrochi)</p>
             {[
               { field:"architectName",    label:"Ism-familiya *",  placeholder:"Karimov Alisher" },
               { field:"architectPhone",   label:"Telefon",         placeholder:"+998 90 000 00 00" },
               { field:"architectAddress", label:"Manzil/Studiya",  placeholder:"Toshkent, Yunusobod 19" },
             ].map(f => (
               <div key={f.field} className="space-y-1.5">
-                <Label className="text-xs font-semibold text-amber-700/70">{f.label}</Label>
+                <Label className={labelCls}>{f.label}</Label>
                 <Input placeholder={f.placeholder} value={(form as any)[f.field]}
                   onChange={e => setForm(prev => ({...prev, [f.field]: e.target.value}))}
-                  className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                  className={inputCls} />
               </div>
             ))}
           </div>
@@ -181,12 +182,12 @@ export default function NewContractPage() {
 
         {/* Project info */}
         <div className="space-y-4">
-          <div className="ornament-divider text-xs text-amber-600/60 font-bold uppercase tracking-widest">📐 Loyiha ma'lumotlari</div>
+          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📐 Loyiha ma'lumotlari</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Loyihadan tanlash</Label>
+              <Label className={labelCls}>Loyihadan tanlash</Label>
               <Select value={form.projectId} onValueChange={fillFromProject}>
-                <SelectTrigger className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08]"><SelectValue placeholder="Loyiha tanlang"/></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Loyiha tanlang"/></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— Qo'lda kiritish —</SelectItem>
                   {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -194,61 +195,60 @@ export default function NewContractPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Loyiha turi</Label>
+              <Label className={labelCls}>Loyiha turi</Label>
               <Input placeholder="Turar-joy, Savdo markazi..." value={form.projectType}
                 onChange={e => setForm(f => ({...f, projectType: e.target.value}))}
-                className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Loyiha nomi *</Label>
+              <Label className={labelCls}>Loyiha nomi *</Label>
               <Input placeholder="Loyiha nomi" value={form.projectName}
                 onChange={e => setForm(f => ({...f, projectName: e.target.value}))}
-                className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Manzil</Label>
+              <Label className={labelCls}>Manzil</Label>
               <Input placeholder="Qurilish manzili" value={form.projectAddress}
                 onChange={e => setForm(f => ({...f, projectAddress: e.target.value}))}
-                className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Boshlanish sanasi</Label>
+              <Label className={labelCls}>Boshlanish sanasi</Label>
               <Input type="date" value={form.startDate} onChange={e => setForm(f => ({...f, startDate: e.target.value}))}
-                className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-amber-700/70">Tugash sanasi</Label>
+              <Label className={labelCls}>Tugash sanasi</Label>
               <Input type="date" value={form.endDate} onChange={e => setForm(f => ({...f, endDate: e.target.value}))}
-                className="rounded-xl h-11 border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 dark:bg-amber-950/10" />
+                className={inputCls} />
             </div>
           </div>
         </div>
 
-
         {/* Work items */}
         <div className="space-y-4">
-          <div className="ornament-divider text-xs text-amber-600/60 font-bold uppercase tracking-widest">📋 Ish turlari va narxlar</div>
+          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📋 Ish turlari va narxlar</p>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-arch w-full text-sm">
               <thead>
-                <tr className="border-b border-[#e8d8b0] dark:border-[#2a1e08]">
+                <tr>
                   {["#","Ish turi","Birlik","Miqdor","Narx (so'm)","Jami",""].map(h => (
-                    <th key={h} className="text-left pb-2 px-2 text-xs font-bold text-amber-700/60 whitespace-nowrap">{h}</th>
+                    <th key={h} className="text-left pb-2 px-2 text-xs font-bold text-[#444] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#e8d8b0]/50 dark:divide-[#2a1e08]/50">
+              <tbody className="divide-y divide-[#1a1a1a]">
                 {items.map((item, i) => (
                   <tr key={i} className="group">
-                    <td className="py-2 px-2 text-amber-600/50 font-bold">{i+1}</td>
+                    <td className="py-2 px-2 text-[#444] font-bold">{i+1}</td>
                     <td className="py-2 px-2 min-w-[200px]">
                       <Input value={item.name} placeholder="Loyiha eskizi, 3D vizualizatsiya..."
                         onChange={e => updateItem(i,"name",e.target.value)}
-                        className="h-9 rounded-lg border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/30 text-sm" />
+                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm" />
                     </td>
                     <td className="py-2 px-2 w-24">
                       <Select value={item.unit} onValueChange={v => updateItem(i,"unit",v)}>
-                        <SelectTrigger className="h-9 rounded-lg border-[#e8d8b0] dark:border-[#2a1e08] text-sm w-20"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm w-20"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {["dona","m²","m","soat","varaq","to'plam"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                         </SelectContent>
@@ -257,19 +257,19 @@ export default function NewContractPage() {
                     <td className="py-2 px-2 w-24">
                       <Input type="number" value={item.qty} min={1}
                         onChange={e => updateItem(i,"qty",+e.target.value)}
-                        className="h-9 rounded-lg border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/30 text-sm w-20" />
+                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm w-20" />
                     </td>
                     <td className="py-2 px-2 w-36">
                       <Input type="number" value={item.price} min={0} placeholder="0"
                         onChange={e => updateItem(i,"price",+e.target.value)}
-                        className="h-9 rounded-lg border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/30 text-sm" />
+                        className="h-9 rounded-lg bg-[#0d0d0d] border-[#333] text-white text-sm" />
                     </td>
-                    <td className="py-2 px-2 font-bold text-emerald-600 whitespace-nowrap">
+                    <td className="py-2 px-2 font-bold text-white whitespace-nowrap">
                       {formatCurrency(item.qty * item.price)}
                     </td>
                     <td className="py-2 px-1">
                       {items.length > 1 && (
-                        <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => removeItem(i)} className="text-[#444] hover:text-[#888] opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
@@ -280,19 +280,19 @@ export default function NewContractPage() {
             </table>
           </div>
           <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={addItem} size="sm" className="gap-1.5 rounded-xl border-[#e8d8b0] dark:border-[#2a1e08] text-amber-700 hover:bg-amber-50">
+            <Button variant="outline" onClick={addItem} size="sm" className="gap-1.5 rounded-xl border-[#333] text-[#888] hover:text-white hover:bg-[#1a1a1a]">
               <Plus className="h-4 w-4" /> Ish turi qo'shish
             </Button>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-xs text-amber-600/50">Avans to'lov</p>
+                <p className="text-xs text-[#444]">Avans to'lov</p>
                 <Input type="number" value={form.advanceAmount} min={0} placeholder="0"
                   onChange={e => setForm(f => ({...f, advanceAmount: +e.target.value}))}
-                  className="h-9 w-40 rounded-xl border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/40 text-sm text-right mt-1" />
+                  className="h-9 w-40 rounded-xl bg-[#0d0d0d] border-[#333] text-white text-sm text-right mt-1" />
               </div>
               <div className="text-right">
-                <p className="text-xs text-amber-600/50">Jami summa</p>
-                <p className="text-xl font-bold text-emerald-600 mt-1">{formatCurrency(totalAmount)}</p>
+                <p className="text-xs text-[#444]">Jami summa</p>
+                <p className="text-xl font-bold text-white mt-1">{formatCurrency(totalAmount)}</p>
               </div>
             </div>
           </div>
@@ -300,18 +300,18 @@ export default function NewContractPage() {
 
         {/* Terms */}
         <div className="space-y-3">
-          <div className="ornament-divider text-xs text-amber-600/60 font-bold uppercase tracking-widest">📄 Shartnoma shartlari</div>
+          <p className="text-xs text-[#444] font-bold uppercase tracking-widest border-b border-[#222] pb-2">📄 Shartnoma shartlari</p>
           <Textarea value={form.terms} rows={6} placeholder="Shartnoma shartlari..."
             onChange={e => setForm(f => ({...f, terms: e.target.value}))}
-            className="rounded-xl border-[#e8d8b0] dark:border-[#2a1e08] bg-amber-50/30 dark:bg-amber-950/10 resize-none text-sm" />
+            className="rounded-xl bg-[#0d0d0d] border-[#333] text-white resize-none text-sm" />
         </div>
 
         {/* Status */}
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-amber-700/70">Holat</Label>
+            <Label className={labelCls}>Holat</Label>
             <Select value={form.status} onValueChange={v => setForm(f => ({...f, status: v}))}>
-              <SelectTrigger className="w-40 h-11 rounded-xl border-[#e8d8b0] dark:border-[#2a1e08]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-40 h-11 rounded-xl bg-[#0d0d0d] border-[#333] text-white"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="DRAFT">Qoralama</SelectItem>
                 <SelectItem value="PENDING">Kutilmoqda</SelectItem>
@@ -321,7 +321,7 @@ export default function NewContractPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={save} disabled={saving} className="btn-blue text-white rounded-xl gap-2 h-11 px-6">
+          <Button onClick={save} disabled={saving} className="btn-primary rounded-xl gap-2 h-11 px-6">
             <Save className="h-4 w-4" />
             {saving ? "Saqlanmoqda..." : "Shartnomani Saqlash"}
           </Button>

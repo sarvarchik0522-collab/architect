@@ -18,8 +18,8 @@ const MONTHS_FULL = ["Yanvar","Fevral","Mart","Aprel","May","Iyun","Iyul","Avgus
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="glass rounded-xl p-3 shadow-lg border border-slate-200 dark:border-slate-700 text-sm">
-      <p className="font-bold text-slate-700 dark:text-slate-200 mb-1">{label}</p>
+    <div className="rounded-xl p-3 shadow-lg border border-[#333] bg-[#111] text-sm">
+      <p className="font-bold text-white mb-1">{label}</p>
       {payload.map((p: any) => (
         <p key={p.dataKey} style={{ color: p.color }} className="font-medium">
           {p.name}: {formatCurrency(p.value)}
@@ -101,36 +101,27 @@ export default function FinancePage() {
   const years = [year-1, year, year+1]
 
   return (
-    <div className="space-y-8 page-enter arch-pattern">
+    <div className="space-y-8 page-enter">
 
       {/* ── Header ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-700 via-green-700 to-teal-800 p-8 text-white">
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">
-          <svg width="200" height="160" viewBox="0 0 200 160" className="animate-float-x">
-            {[0,1,2,3,4,5,6,7,8,9,10,11].map((i)=>{
-              const h = 20 + Math.sin(i*0.8)*40 + i*8
-              return <rect key={i} x={i*16+4} y={155-h} width="12" height={h} rx="3" fill="white" opacity={0.3+i*0.05}/>
-            })}
-            <line x1="4" y1="155" x2="196" y2="155" stroke="white" strokeWidth="1"/>
-          </svg>
-        </div>
+      <div className="relative overflow-hidden rounded-2xl bg-[#0d0d0d] border border-[#222] p-8 text-white">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="h-10 w-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
-                <BarChart3 className="h-5 w-5 text-white" />
+              <div className="h-10 w-10 rounded-xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                <BarChart3 className="h-5 w-5 text-[#aaa]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Moliya</h2>
-                <p className="text-emerald-200 text-sm">{month ? MONTHS_FULL[month-1] : year} yil · {profitPct}% foyda ulushi</p>
+                <h2 className="text-2xl font-bold text-white">Moliya</h2>
+                <p className="text-[#666] text-sm">{month ? MONTHS_FULL[month-1] : year} yil · {profitPct}% foyda ulushi</p>
               </div>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setExpOpen(true)} className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-white gap-2 rounded-xl h-10 px-4 backdrop-blur-sm">
+            <Button onClick={() => setExpOpen(true)} className="btn-ghost gap-2 rounded-xl h-10 px-4">
               <TrendingDown className="h-4 w-4" /> Xarajat
             </Button>
-            <Button onClick={() => setIncOpen(true)} className="bg-white text-emerald-700 hover:bg-emerald-50 gap-2 rounded-xl h-10 px-4 font-semibold shadow-lg">
+            <Button onClick={() => setIncOpen(true)} className="btn-primary gap-2 rounded-xl h-10 px-4">
               <TrendingUp className="h-4 w-4" /> Daromad
             </Button>
           </div>
@@ -140,18 +131,18 @@ export default function FinancePage() {
       {/* ── Period selector ── */}
       <div className="flex items-center gap-2 flex-wrap">
         <Select value={String(year)} onValueChange={v => setYear(+v)}>
-          <SelectTrigger className="w-24 h-10 rounded-xl border-slate-200 dark:border-slate-700"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-24 h-10 rounded-xl border-[#333] bg-[#111] text-white"><SelectValue /></SelectTrigger>
           <SelectContent>{years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
         </Select>
         <button onClick={() => setMonth(null)}
           className={cn("px-3 py-2 rounded-xl text-sm font-semibold transition-all border",
-            !month ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/25" : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300")}>
+            !month ? "bg-white text-[#111] border-white" : "border-[#333] bg-[#111] hover:bg-[#1a1a1a] text-[#666]")}>
           Yil
         </button>
         {MONTHS.map((m,i) => (
           <button key={i} onClick={() => setMonth(month===i+1?null:i+1)}
             className={cn("px-3 py-2 rounded-xl text-sm font-medium transition-all border",
-              month===i+1 ? "bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/25" : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400")}>
+              month===i+1 ? "bg-white text-[#111] border-white" : "border-[#333] bg-[#111] hover:bg-[#1a1a1a] text-[#555]")}>
             {m}
           </button>
         ))}
@@ -160,57 +151,54 @@ export default function FinancePage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label:"Daromad", value: totalIncome, icon: TrendingUp, gradient:"from-emerald-500 to-teal-600", bg:"bg-emerald-50 dark:bg-emerald-950/30", text:"text-emerald-600", border:"border-emerald-100 dark:border-emerald-900/40", sub:`${incomes.length} ta to'lov` },
-          { label:"Xarajat", value: totalExpense, icon: TrendingDown, gradient:"from-red-500 to-rose-600", bg:"bg-red-50 dark:bg-red-950/30", text:"text-red-600", border:"border-red-100 dark:border-red-900/40", sub:`${expenses.length} ta xarajat` },
-          { label:"Sof foyda", value: profit, icon: DollarSign, gradient: profit>=0?"from-blue-500 to-violet-600":"from-orange-500 to-red-600", bg: profit>=0?"bg-blue-50 dark:bg-blue-950/30":"bg-orange-50 dark:bg-orange-950/30", text: profit>=0?"text-blue-600":"text-orange-600", border: profit>=0?"border-blue-100 dark:border-blue-900/40":"border-orange-100 dark:border-orange-900/40", sub:`${profitPct}% foyda` },
+          { label:"Daromad",  value: totalIncome,  icon: TrendingUp,   sub:`${incomes.length} ta to'lov` },
+          { label:"Xarajat",  value: totalExpense, icon: TrendingDown, sub:`${expenses.length} ta xarajat` },
+          { label:"Sof foyda",value: profit,        icon: DollarSign,  sub:`${profitPct}% foyda` },
         ].map((s, i) => (
-          <div key={s.label} className={cn("finance-card bg-white dark:bg-slate-900 border animate-card", s.border)} style={{ animationDelay:`${i*0.1}s` }}>
-            <div className={cn("finance-bg", s.text)} />
-            <div className="relative z-10 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className={cn("h-12 w-12 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg", s.gradient)}>
-                  <s.icon className="h-6 w-6 text-white" />
-                </div>
-                <div className={cn("h-1.5 w-16 rounded-full bg-gradient-to-r self-center", s.gradient)} />
+          <div key={s.label} className="stat-card" style={{ animationDelay:`${i*0.1}s` }}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="h-12 w-12 rounded-2xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
+                <s.icon className="h-6 w-6 text-[#888]" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-1">{s.label}</p>
-              <p className={cn("text-2xl font-bold", s.text)}>
-                {s.value >= 0 || s.label !== "Sof foyda" ? "" : "-"}{formatCurrency(Math.abs(s.value))}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">{s.sub}</p>
+              <div className="h-1.5 w-16 rounded-full bg-[#222] self-center" />
             </div>
+            <p className="text-sm text-[#555] font-medium mb-1">{s.label}</p>
+            <p className="text-2xl font-bold text-white">
+              {formatCurrency(Math.abs(s.value))}
+            </p>
+            <p className="text-xs text-[#444] mt-1">{s.sub}</p>
           </div>
         ))}
       </div>
 
       {/* ── Chart ── */}
       {!month && chartData.some(d => d.Daromad > 0 || d.Xarajat > 0) && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6">
+        <div className="bg-[#111] border border-[#222] rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-white">{year} yil — Oylik tahlil</h3>
-              <p className="text-sm text-slate-400">Daromad va xarajatlar dinamikasi</p>
+              <h3 className="font-bold text-white">{year} yil — Oylik tahlil</h3>
+              <p className="text-sm text-[#444]">Daromad va xarajatlar dinamikasi</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="colorDaromad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.02}/>
+                  <stop offset="5%" stopColor="#fff" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#fff" stopOpacity={0.02}/>
                 </linearGradient>
                 <linearGradient id="colorXarajat" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.02}/>
+                  <stop offset="5%" stopColor="#888" stopOpacity={0.15}/>
+                  <stop offset="95%" stopColor="#888" stopOpacity={0.02}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(226,232,240,0.5)" />
-              <XAxis dataKey="month" tick={{ fontSize:12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v => (v/1000000).toFixed(0)+"M"} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+              <XAxis dataKey="month" tick={{ fontSize:12, fill:"#555" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize:11, fill:"#555" }} axisLine={false} tickLine={false} tickFormatter={v => (v/1000000).toFixed(0)+"M"} />
               <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Area type="monotone" dataKey="Daromad" stroke="#10b981" strokeWidth={2.5} fill="url(#colorDaromad)" dot={{ fill:"#10b981", r:4 }} activeDot={{ r:6 }}/>
-              <Area type="monotone" dataKey="Xarajat" stroke="#ef4444" strokeWidth={2.5} fill="url(#colorXarajat)" dot={{ fill:"#ef4444", r:4 }} activeDot={{ r:6 }}/>
+              <Legend wrapperStyle={{ color:"#888" }} />
+              <Area type="monotone" dataKey="Daromad" stroke="#fff" strokeWidth={2} fill="url(#colorDaromad)" dot={{ fill:"#fff", r:3 }} activeDot={{ r:5 }}/>
+              <Area type="monotone" dataKey="Xarajat" stroke="#888" strokeWidth={2} fill="url(#colorXarajat)" dot={{ fill:"#888", r:3 }} activeDot={{ r:5 }}/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -218,39 +206,43 @@ export default function FinancePage() {
 
       {/* ── Transactions ── */}
       <Tabs defaultValue="income">
-        <TabsList className="rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
-          <TabsTrigger value="income" className="rounded-lg">💰 Daromadlar ({incomes.length})</TabsTrigger>
-          <TabsTrigger value="expense" className="rounded-lg">💸 Xarajatlar ({expenses.length})</TabsTrigger>
+        <TabsList className="rounded-xl bg-[#111] border border-[#222] p-1">
+          <TabsTrigger value="income" className="rounded-lg data-[state=active]:bg-[#222] data-[state=active]:text-white text-[#555]">
+            💰 Daromadlar ({incomes.length})
+          </TabsTrigger>
+          <TabsTrigger value="expense" className="rounded-lg data-[state=active]:bg-[#222] data-[state=active]:text-white text-[#555]">
+            💸 Xarajatlar ({expenses.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="income" className="mt-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden">
             <div className="p-4 space-y-2">
               {loading ? <div className="skeleton h-20 rounded-xl" /> :
                incomes.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-[#444]">
                   <TrendingUp className="h-10 w-10 mx-auto mb-2 opacity-20" />
                   <p className="text-sm">Daromad yozuvi yo'q</p>
                 </div>
               ) : incomes.map((inc:any, i) => (
-                <div key={inc.id} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all group animate-slide-up"
+                <div key={inc.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[#1a1a1a] border border-[#222] hover:bg-[#1e1e1e] transition-all group"
                   style={{ animationDelay:`${i*0.04}s` }}>
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    <div className="h-10 w-10 rounded-xl bg-[#222] border border-[#333] flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="h-4 w-4 text-[#666]" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{inc.description || "Daromad"}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-sm font-semibold text-white">{inc.description || "Daromad"}</p>
+                      <p className="text-xs text-[#444]">
                         {formatDate(inc.date)}{inc.project ? ` · ${inc.project.name}` : ""}{inc.client ? ` · ${inc.client.name}` : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-emerald-600 text-sm">+{formatCurrency(inc.amount)}</span>
+                    <span className="font-bold text-white text-sm">+{formatCurrency(inc.amount)}</span>
                     <button onClick={async () => { await fetch(`/api/finance/income/${inc.id}`, {method:"DELETE"}); load() }}
-                      className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all">
-                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                      className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#2a2a2a] transition-all">
+                      <Trash2 className="h-3.5 w-3.5 text-[#555]" />
                     </button>
                   </div>
                 </div>
@@ -260,33 +252,33 @@ export default function FinancePage() {
         </TabsContent>
 
         <TabsContent value="expense" className="mt-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden">
             <div className="p-4 space-y-2">
               {loading ? <div className="skeleton h-20 rounded-xl" /> :
                expenses.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-[#444]">
                   <TrendingDown className="h-10 w-10 mx-auto mb-2 opacity-20" />
                   <p className="text-sm">Xarajat yozuvi yo'q</p>
                 </div>
               ) : expenses.map((exp:any, i) => (
-                <div key={exp.id} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all group animate-slide-up"
+                <div key={exp.id} className="flex items-center justify-between p-3.5 rounded-xl bg-[#1a1a1a] border border-[#222] hover:bg-[#1e1e1e] transition-all group"
                   style={{ animationDelay:`${i*0.04}s` }}>
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                    <div className="h-10 w-10 rounded-xl bg-[#222] border border-[#333] flex items-center justify-center flex-shrink-0">
+                      <TrendingDown className="h-4 w-4 text-[#666]" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{exp.description || "Xarajat"}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-sm font-semibold text-white">{exp.description || "Xarajat"}</p>
+                      <p className="text-xs text-[#444]">
                         {formatDate(exp.date)}{exp.category ? ` · ${EXPENSE_CATEGORIES[exp.category]||exp.category}` : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-red-500 text-sm">-{formatCurrency(exp.amount)}</span>
+                    <span className="font-bold text-[#ccc] text-sm">-{formatCurrency(exp.amount)}</span>
                     <button onClick={async () => { await fetch(`/api/finance/expense/${exp.id}`, {method:"DELETE"}); load() }}
-                      className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all">
-                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                      className="h-7 w-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#2a2a2a] transition-all">
+                      <Trash2 className="h-3.5 w-3.5 text-[#555]" />
                     </button>
                   </div>
                 </div>
@@ -298,64 +290,70 @@ export default function FinancePage() {
 
       {/* Income Dialog */}
       <Dialog open={incOpen} onOpenChange={setIncOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl bg-[#111] border border-[#222]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">💰 Daromad qo'shish</DialogTitle>
-            <DialogDescription>To'lov ma'lumotlarini kiriting</DialogDescription>
+            <DialogTitle className="text-xl font-bold text-white">💰 Daromad qo'shish</DialogTitle>
+            <DialogDescription className="text-[#666]">To'lov ma'lumotlarini kiriting</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>Sana *</Label><Input type="date" value={incForm.date} className="rounded-xl h-11" onChange={e => setIncForm(f => ({...f, date:e.target.value}))} /></div>
-              <div className="space-y-1.5"><Label>Summa *</Label><Input type="number" placeholder="0" value={incForm.amount} className="rounded-xl h-11" onChange={e => setIncForm(f => ({...f, amount:e.target.value}))} /></div>
+              <div className="space-y-1.5"><Label className="text-[#888]">Sana *</Label>
+                <Input type="date" value={incForm.date} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setIncForm(f => ({...f, date:e.target.value}))} /></div>
+              <div className="space-y-1.5"><Label className="text-[#888]">Summa *</Label>
+                <Input type="number" placeholder="0" value={incForm.amount} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setIncForm(f => ({...f, amount:e.target.value}))} /></div>
             </div>
-            <div className="space-y-1.5"><Label>Kategoriya</Label>
+            <div className="space-y-1.5"><Label className="text-[#888]">Kategoriya</Label>
               <Select value={incForm.category} onValueChange={v => setIncForm(f => ({...f, category:v}))}>
-                <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(INCOME_CATEGORIES).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div className="space-y-1.5"><Label>Tavsif</Label><Input placeholder="To'lov maqsadi..." value={incForm.description} className="rounded-xl h-11" onChange={e => setIncForm(f => ({...f, description:e.target.value}))} /></div>
+            <div className="space-y-1.5"><Label className="text-[#888]">Tavsif</Label>
+              <Input placeholder="To'lov maqsadi..." value={incForm.description} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setIncForm(f => ({...f, description:e.target.value}))} /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>Loyiha</Label>
+              <div className="space-y-1.5"><Label className="text-[#888]">Loyiha</Label>
                 <Select value={incForm.projectId} onValueChange={v => setIncForm(f => ({...f, projectId:v}))}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Tanlang" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Tanlang" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">— Yo'q —</SelectItem>{projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                 </Select></div>
-              <div className="space-y-1.5"><Label>Mijoz</Label>
+              <div className="space-y-1.5"><Label className="text-[#888]">Mijoz</Label>
                 <Select value={incForm.clientId} onValueChange={v => setIncForm(f => ({...f, clientId:v}))}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Tanlang" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue placeholder="Tanlang" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">— Yo'q —</SelectItem>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select></div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIncOpen(false)} className="rounded-xl">Bekor</Button>
-            <Button onClick={addIncome} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">{saving?"Saqlanmoqda...":"Qo'shish"}</Button>
+            <Button variant="outline" onClick={() => setIncOpen(false)} className="rounded-xl border-[#333] text-[#888]">Bekor</Button>
+            <Button onClick={addIncome} disabled={saving} className="btn-primary rounded-xl">{saving?"Saqlanmoqda...":"Qo'shish"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Expense Dialog */}
       <Dialog open={expOpen} onOpenChange={setExpOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl bg-[#111] border border-[#222]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">💸 Xarajat qo'shish</DialogTitle>
-            <DialogDescription>Xarajat ma'lumotlarini kiriting</DialogDescription>
+            <DialogTitle className="text-xl font-bold text-white">💸 Xarajat qo'shish</DialogTitle>
+            <DialogDescription className="text-[#666]">Xarajat ma'lumotlarini kiriting</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>Sana *</Label><Input type="date" value={expForm.date} className="rounded-xl h-11" onChange={e => setExpForm(f => ({...f, date:e.target.value}))} /></div>
-              <div className="space-y-1.5"><Label>Summa *</Label><Input type="number" placeholder="0" value={expForm.amount} className="rounded-xl h-11" onChange={e => setExpForm(f => ({...f, amount:e.target.value}))} /></div>
+              <div className="space-y-1.5"><Label className="text-[#888]">Sana *</Label>
+                <Input type="date" value={expForm.date} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setExpForm(f => ({...f, date:e.target.value}))} /></div>
+              <div className="space-y-1.5"><Label className="text-[#888]">Summa *</Label>
+                <Input type="number" placeholder="0" value={expForm.amount} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setExpForm(f => ({...f, amount:e.target.value}))} /></div>
             </div>
-            <div className="space-y-1.5"><Label>Kategoriya</Label>
+            <div className="space-y-1.5"><Label className="text-[#888]">Kategoriya</Label>
               <Select value={expForm.category} onValueChange={v => setExpForm(f => ({...f, category:v}))}>
-                <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white"><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(EXPENSE_CATEGORIES).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select></div>
-            <div className="space-y-1.5"><Label>Tavsif</Label><Input placeholder="Xarajat maqsadi..." value={expForm.description} className="rounded-xl h-11" onChange={e => setExpForm(f => ({...f, description:e.target.value}))} /></div>
+            <div className="space-y-1.5"><Label className="text-[#888]">Tavsif</Label>
+              <Input placeholder="Xarajat maqsadi..." value={expForm.description} className="rounded-xl h-11 bg-[#0d0d0d] border-[#333] text-white" onChange={e => setExpForm(f => ({...f, description:e.target.value}))} /></div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setExpOpen(false)} className="rounded-xl">Bekor</Button>
-            <Button onClick={addExpense} disabled={saving} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">{saving?"Saqlanmoqda...":"Qo'shish"}</Button>
+            <Button variant="outline" onClick={() => setExpOpen(false)} className="rounded-xl border-[#333] text-[#888]">Bekor</Button>
+            <Button onClick={addExpense} disabled={saving} className="btn-primary rounded-xl">{saving?"Saqlanmoqda...":"Qo'shish"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
