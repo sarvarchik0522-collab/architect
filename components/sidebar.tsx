@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react"
 import {
   LayoutDashboard, FolderKanban, BookOpen, Users, CheckSquare,
   FileText, DollarSign, BarChart3, FileSignature, Search,
-  LogOut, ChevronLeft, Menu,
+  LogOut, ChevronLeft, Menu, Banknote,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -20,6 +20,7 @@ const NAV = [
   { href:"/finance",    label:"Moliya",       Icon:DollarSign       },
   { href:"/reports",    label:"Hisobotlar",   Icon:BarChart3        },
   { href:"/contracts",  label:"Shartnomalar", Icon:FileSignature    },
+  { href:"/debts",      label:"Hisob-kitob",  Icon:Banknote         },
   { href:"/search",     label:"Qidiruv",      Icon:Search           },
 ]
 

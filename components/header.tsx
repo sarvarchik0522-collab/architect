@@ -16,6 +16,7 @@ const PAGES: Record<string, { title: string; sub: string }> = {
   "/finance":   { title:"Moliya",       sub:"Daromad va xarajatlar"    },
   "/reports":   { title:"Hisobotlar",   sub:"Tahlil va statistika"     },
   "/contracts": { title:"Shartnomalar", sub:"Shartnoma generatori"     },
+  "/debts":     { title:"Hisob-kitob",  sub:"Haqdorlar va qarzlar"     },
   "/search":    { title:"Qidiruv",      sub:"Global qidiruv"           },
   "/profile":   { title:"Profil",       sub:"Sozlamalar"               },
 }

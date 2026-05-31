@@ -17,14 +17,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projects  Project[]
-  diaries   Diary[]
-  tasks     Task[]
-  incomes   Income[]
-  expenses  Expense[]
-  documents Document[]
-  clients   Client[]
-  contracts Contract[]
+  projects    Project[]
+  diaries     Diary[]
+  tasks       Task[]
+  incomes     Income[]
+  expenses    Expense[]
+  documents   Document[]
+  clients     Client[]
+  contracts   Contract[]
+  receivables Receivable[]
+  debts       Debt[]
 }
 
 model Client {
@@ -38,11 +40,12 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId   String
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projects Project[]
-  payments Income[]
-  contracts Contract[]
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects    Project[]
+  payments    Income[]
+  contracts   Contract[]
+  receivables Receivable[]
 }
 
 model Project {
@@ -215,4 +218,66 @@ model Contract {
   project   Project? @relation(fields: [projectId], references: [id])
   clientId  String?
   client    Client?  @relation(fields: [clientId], references: [id])
+}
+
+
+model Receivable {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  description String?
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  dueDate     DateTime?
+  status      String   @default("PENDING")  // PENDING | PARTIAL | PAID
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  payments  ReceivablePayment[]
+}
+
+model ReceivablePayment {
+  id           String   @id @default(cuid())
+  amount       Float
+  date         DateTime @default(now())
+  note         String?
+  createdAt    DateTime @default(now())
+
+  receivableId String
+  receivable   Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+}
+
+model Debt {
+  id          String   @id @default(cuid())
+  creditor    String
+  phone       String?
+  description String?
+  amount      Float
+  paidAmount  Float    @default(0)
+  borrowedAt  DateTime @default(now())
+  dueDate     DateTime?
+  status      String   @default("PENDING")  // PENDING | PARTIAL | PAID
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments DebtPayment[]
+}
+
+model DebtPayment {
+  id        String   @id @default(cuid())
+  amount    Float
+  date      DateTime @default(now())
+  note      String?
+  createdAt DateTime @default(now())
+
+  debtId    String
+  debt      Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
 }

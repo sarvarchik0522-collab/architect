@@ -442,3 +442,136 @@ export function printContractPDF(contract: any) {
 </body></html>`)
   printWin.document.close()
 }
+
+
+
+/* ══════════════════════════════════════════════
+   RECEIVABLES & DEBTS REPORT
+══════════════════════════════════════════════ */
+function buildReceivablesHTML(receivables: any[], debts: any[]): string {
+  const now = new Date().toLocaleDateString("uz-UZ", { year:"numeric", month:"long", day:"numeric" })
+
+  const recTotal     = receivables.reduce((s, r) => s + r.totalAmount, 0)
+  const recPaid      = receivables.reduce((s, r) => s + r.paidAmount,  0)
+  const recRemaining = recTotal - recPaid
+  const debtTotal     = debts.reduce((s, d) => s + d.amount,     0)
+  const debtPaid      = debts.reduce((s, d) => s + d.paidAmount, 0)
+  const debtRemaining = debtTotal - debtPaid
+
+  const STATUS_LABELS: Record<string,string> = { PENDING:"Kutilmoqda", PARTIAL:"Qisman", PAID:"To'liq" }
+
+  const tableHdr = (cols: string[]) =>
+    `<thead><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead>`
+
+  let html = `
+  <div class="title-block">
+    <h1>HISOB-KITOB — HAQDORLAR VA QARZLAR</h1>
+    <p class="sub">${now}</p>
+  </div>
+  <hr class="gold-line">
+
+  <h2 class="section-title">📥 Haqdorlar Xulosasi</h2>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="lbl">Jami Haqdorlik</div><div class="val">${formatCurrency(recTotal)}</div></div>
+    <div class="stat-box"><div class="lbl">Qabul Qilingan</div><div class="val">${formatCurrency(recPaid)}</div></div>
+    <div class="stat-box"><div class="lbl">Qoldiq</div><div class="val">${formatCurrency(recRemaining)}</div></div>
+  </div>`
+
+  if (receivables.length) {
+    html += `
+  <h2 class="section-title">👥 Haqdorlar Ro'yxati (${receivables.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Ism","Telefon","Jami Summa","To'langan","Qoldiq","Muddat","Holat"])}
+    <tbody>
+      ${receivables.map((r, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${r.name}</strong>${r.description?`<br><small>${r.description}</small>`:""}</td>
+        <td>${r.phone||"—"}</td>
+        <td>${formatCurrency(r.totalAmount)}</td>
+        <td style="color:#3a9">${formatCurrency(r.paidAmount)}</td>
+        <td>${formatCurrency(r.totalAmount - r.paidAmount)}</td>
+        <td>${r.dueDate?formatDate(r.dueDate):"—"}</td>
+        <td><span class="badge">${STATUS_LABELS[r.status]||r.status}</span></td>
+      </tr>`).join("")}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="3"><strong>Jami</strong></td>
+      <td><strong>${formatCurrency(recTotal)}</strong></td>
+      <td><strong>${formatCurrency(recPaid)}</strong></td>
+      <td><strong>${formatCurrency(recRemaining)}</strong></td>
+      <td colspan="2"></td>
+    </tr></tfoot>
+  </table>`
+  }
+
+  html += `
+  <h2 class="section-title">📤 Mening Qarzlarim Xulosasi</h2>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="lbl">Jami Qarz</div><div class="val">${formatCurrency(debtTotal)}</div></div>
+    <div class="stat-box"><div class="lbl">Qaytarilgan</div><div class="val">${formatCurrency(debtPaid)}</div></div>
+    <div class="stat-box"><div class="lbl">Qoldiq Qarz</div><div class="val">${formatCurrency(debtRemaining)}</div></div>
+  </div>`
+
+  if (debts.length) {
+    html += `
+  <h2 class="section-title">🏦 Qarzlar Ro'yxati (${debts.length} ta)</h2>
+  <table>
+    ${tableHdr(["#","Kreditor","Telefon","Qarz Summasi","Qaytarilgan","Qoldiq","Olingan","Muddat","Holat"])}
+    <tbody>
+      ${debts.map((d, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${d.creditor}</strong>${d.description?`<br><small>${d.description}</small>`:""}</td>
+        <td>${d.phone||"—"}</td>
+        <td>${formatCurrency(d.amount)}</td>
+        <td style="color:#3a9">${formatCurrency(d.paidAmount)}</td>
+        <td>${formatCurrency(d.amount - d.paidAmount)}</td>
+        <td>${formatDate(d.borrowedAt)}</td>
+        <td>${d.dueDate?formatDate(d.dueDate):"—"}</td>
+        <td><span class="badge">${STATUS_LABELS[d.status]||d.status}</span></td>
+      </tr>`).join("")}
+    </tbody>
+    <tfoot><tr>
+      <td colspan="3"><strong>Jami</strong></td>
+      <td><strong>${formatCurrency(debtTotal)}</strong></td>
+      <td><strong>${formatCurrency(debtPaid)}</strong></td>
+      <td><strong>${formatCurrency(debtRemaining)}</strong></td>
+      <td colspan="3"></td>
+    </tr></tfoot>
+  </table>`
+  }
+
+  html += `<p class="footer-text">Arxitektor Kundaligi · Hisob-kitob hisoboti · ${now}</p>`
+  return html
+}
+
+/** Export receivables + debts report as Word (.doc) */
+export function exportReceivablesReport(receivables: any[], debts: any[]) {
+  const html = buildReceivablesHTML(receivables, debts)
+  downloadWordBlob(html, `hisob-kitob-${new Date().toISOString().split("T")[0]}.doc`)
+}
+
+/** Print receivables + debts report as PDF */
+export function printReceivablesPDF(receivables: any[], debts: any[]) {
+  const html = buildReceivablesHTML(receivables, debts)
+  const printWin = window.open("", "_blank", "width=900,height=1100")
+  if (!printWin) return
+  printWin.document.write(`<!DOCTYPE html><html lang="uz"><head><meta charset="UTF-8"/><title>Hisob-kitob</title>
+<style>
+  ${SHARED_CSS}
+  html,body{background:white!important}
+  body{padding:14mm 16mm;font-size:10pt}
+  @page{size:A4 portrait;margin:12mm 14mm}
+  .section-title{margin:10pt 0 4pt;font-size:11.5pt}
+  table{font-size:8.5pt}
+  thead th{padding:5pt 8pt;font-size:7pt}
+  tbody td{padding:4pt 8pt}
+  .stat-box .val{font-size:13pt}
+  @media print{html,body{padding:0!important}}
+</style></head><body>
+  ${html}
+  <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},400)}</script>
+</body></html>`)
+  printWin.document.close()
+}
